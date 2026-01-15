@@ -1,33 +1,23 @@
+require('dotenv').config();
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var mongoose = require("mongoose");
+var cors = require("cors");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
+var authRouter = require("./routes/auth");
 
 var app = express();
 
-const uri =
-  "mongodb+srv://mernstack:mernstack@merncluster.o1l1ksu.mongodb.net/?appName=merncluster";
-async function connectDB() {
-  mongoose.connect(uri, {
-    //   useNewUrlParser: true,
-    //   useUnifiedTopology: true,
-  });
-  try {
-    await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("connected to MongoDB");
-  } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
-  }
-}
-connectDB();
+// Connect to MongoDB
+const uri = process.env.MONGO_URI || "mongodb+srv://mernstack:mernstack@merncluster.o1l1ksu.mongodb.net/?appName=merncluster";
+mongoose.connect(uri)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Error connecting to MongoDB:", err));
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -37,10 +27,12 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+app.use("/api/auth", authRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
