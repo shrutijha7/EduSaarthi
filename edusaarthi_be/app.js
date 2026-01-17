@@ -10,13 +10,20 @@ var cors = require("cors");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var authRouter = require("./routes/auth");
+var coursesRouter = require("./routes/courses");
+var activitiesRouter = require("./routes/activities");
 
 var app = express();
 
 // Connect to MongoDB
-const uri = process.env.MONGO_URI || "mongodb+srv://mernstack:mernstack@merncluster.o1l1ksu.mongodb.net/?appName=merncluster";
+const uri = process.env.MONGO_URI;
+if (!uri) {
+  console.error("Error: MONGO_URI is not defined in .env file");
+  process.exit(1);
+}
+
 mongoose.connect(uri)
-  .then(() => console.log("Connected to MongoDB"))
+  .then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
 // view engine setup
@@ -33,6 +40,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/courses", coursesRouter);
+app.use("/api/activities", activitiesRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
