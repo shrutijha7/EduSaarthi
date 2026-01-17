@@ -2,7 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Star, User, ChevronRight } from 'lucide-react';
+import { BookOpen, Star, User, ChevronRight, Plus, X } from 'lucide-react';
 
 // Import themed images
 import reactThumb from '../assets/react_course.png';
@@ -14,6 +14,8 @@ const Assignments = () => {
     const [assignments, setAssignments] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [selectedAssignment, setSelectedAssignment] = React.useState(null);
+    const [showModal, setShowModal] = React.useState(false);
+    const [newItem, setNewItem] = React.useState({ title: '', category: '', instructor: '' });
     const navigate = useNavigate();
 
     React.useEffect(() => {
@@ -52,6 +54,27 @@ const Assignments = () => {
         navigate(`/courses/${assignment._id}`);
     };
 
+    const handleCreate = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const payload = {
+                title: newItem.title,
+                category: newItem.category,
+                instructor: newItem.instructor,
+                imageName: ['react_course', 'node_course', 'design_course', 'python_course'][Math.floor(Math.random() * 4)] // Random image for now
+            };
+            const response = await axios.post('http://localhost:3000/api/courses', payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            // Refresh list
+            window.location.reload();
+        } catch (error) {
+            console.error('Error creating assignment:', error);
+            alert('Failed to create assignment');
+        }
+    };
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -64,10 +87,74 @@ const Assignments = () => {
 
     return (
         <DashboardLayout>
-            <header style={{ marginBottom: '3rem' }}>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>My Assignments</h1>
-                <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Manage your active automations and process new documents.</p>
+            <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>My Assignments</h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Manage your active automations and process new documents.</p>
+                </div>
+                <button className="btn-primary" style={{ width: 'auto' }} onClick={() => setShowModal(true)}>
+                    <Plus size={20} /> New Assignment
+                </button>
             </header>
+
+            {assignments.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                    <p>No assignments found. create one to get started.</p>
+                </div>
+            )}
+
+            {showModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                }}>
+                    <div className="glass-card" style={{ width: '500px', maxWidth: '90%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.5rem' }}>Create New Assignment</h2>
+                            <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreate}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Assignment Title</label>
+                                <input
+                                    type="text"
+                                    required
+                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                    value={newItem.title}
+                                    onChange={e => setNewItem({ ...newItem, title: e.target.value })}
+                                    placeholder="e.g. Q1 Marketing Report"
+                                />
+                            </div>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Category</label>
+                                <input
+                                    type="text"
+                                    required
+                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                    value={newItem.category}
+                                    onChange={e => setNewItem({ ...newItem, category: e.target.value })}
+                                    placeholder="e.g. Finance"
+                                />
+                            </div>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Processor / Lead</label>
+                                <input
+                                    type="text"
+                                    required
+                                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                    value={newItem.instructor}
+                                    onChange={e => setNewItem({ ...newItem, instructor: e.target.value })}
+                                    placeholder="e.g. Jane Doe"
+                                />
+                            </div>
+                            <button type="submit" className="btn-primary">Create Assignment</button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
                 {assignments.map((assignment, i) => (

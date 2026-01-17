@@ -16,6 +16,7 @@ const signToken = (id) => {
 router.post('/register', async (req, res, next) => {
     try {
         const newUser = await User.create({
+            name: req.body.name,
             username: req.body.username,
             email: req.body.email,
             password: req.body.password
