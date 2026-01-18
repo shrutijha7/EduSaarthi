@@ -55,10 +55,44 @@ router.get('/:id', protect, async (req, res) => {
     }
 });
 
-// Seed courses (for demo purposes)
-// Seed route disabled for data safety
-router.post('/seed', protect, async (req, res) => {
-    return res.status(403).json({ status: 'fail', message: 'Seeding is disabled.' });
+// Update course (Rename/Update)
+router.patch('/:id', protect, async (req, res) => {
+    try {
+        const course = await Course.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user._id },
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!course) {
+            return res.status(404).json({ status: 'fail', message: 'Course not found' });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: { course }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+});
+
+// Delete course
+router.delete('/:id', protect, async (req, res) => {
+    try {
+        const course = await Course.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+
+        if (!course) {
+            return res.status(404).json({ status: 'fail', message: 'Course not found' });
+        }
+
+        res.status(204).json({
+            status: 'success',
+            data: null
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
 });
 
 module.exports = router;

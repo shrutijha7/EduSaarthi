@@ -1,10 +1,11 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Bell, Settings, Search, LayoutGrid, BookOpen, Clock, Zap } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
 
     return (
         <div className="dashboard-layout">
@@ -61,11 +62,11 @@ const Layout = ({ children }) => {
                         <input type="text" placeholder="Search assignments, logs..." />
                     </div>
                     <div className="top-nav-actions">
-                        <div className="icon-badge" onClick={() => alert('No new notifications')}>
+                        <div className="icon-badge" title="Notifications">
                             <Bell size={20} />
                             <span className="badge-dot"></span>
                         </div>
-                        <div className="user-profile-small" style={{ cursor: 'pointer' }} onClick={() => alert('Viewing Profile Profile...')}>
+                        <div className="user-profile-small" style={{ cursor: 'pointer' }} onClick={() => navigate('/settings')}>
                             <div className="avatar-circle">
                                 {user?.username?.charAt(0).toUpperCase()}
                             </div>

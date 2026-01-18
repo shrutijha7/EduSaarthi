@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Assignments from './pages/Courses';
 import Schedule from './pages/Schedule';
 import CourseDetail from './pages/CourseDetail';
+import Settings from './pages/Settings';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -62,6 +63,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <CourseDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

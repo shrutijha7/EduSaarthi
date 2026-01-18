@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Users, Save, Trash2 } from 'lucide-react';
 
 import axios from 'axios';
 
@@ -11,9 +11,13 @@ const AssignmentWorkspace = () => {
     const [status, setStatus] = useState('idle'); // idle, processing, completed
     const [selectedFile, setSelectedFile] = useState(null);
     const [taskType, setTaskType] = useState('question_generation');
+    const [recipientEmail, setRecipientEmail] = useState('');
     const [generatedContent, setGeneratedContent] = useState(null);
     const [assignment, setAssignment] = useState(null);
     const [loadingAssignment, setLoadingAssignment] = useState(true);
+    const [recipientGroups, setRecipientGroups] = useState([]);
+    const [newGroupName, setNewGroupName] = useState('');
+    const [showSaveGroup, setShowSaveGroup] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -30,16 +34,64 @@ const AssignmentWorkspace = () => {
                 setAssignment(response.data.data.course);
             } catch (error) {
                 console.error('Error fetching assignment details:', error);
-                // navigate('/courses'); // Optional: redirect on fail
             } finally {
                 setLoadingAssignment(false);
             }
         };
 
+        const fetchGroups = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`http://localhost:3000/api/recipient-groups`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setRecipientGroups(response.data.data.groups);
+            } catch (error) {
+                console.error('Error fetching recipient groups:', error);
+            }
+        };
+
         if (id) {
             fetchAssignment();
+            fetchGroups();
         }
     }, [id, navigate]);
+
+    const handleSaveGroup = async () => {
+        if (!newGroupName || !recipientEmail) {
+            alert('Please provide a group name and at least one email.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(`http://localhost:3000/api/recipient-groups`,
+                { name: newGroupName, emails: recipientEmail },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setRecipientGroups([...recipientGroups, response.data.data.group]);
+            setNewGroupName('');
+            setShowSaveGroup(false);
+            alert('Group saved successfully!');
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to save group');
+        }
+    };
+
+    const handleDeleteGroup = async (groupId) => {
+        if (!window.confirm('Are you sure you want to delete this group?')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`http://localhost:3000/api/recipient-groups/${groupId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setRecipientGroups(recipientGroups.filter(g => g._id !== groupId));
+        } catch (error) {
+            alert('Failed to delete group');
+        }
+    };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -68,6 +120,9 @@ const AssignmentWorkspace = () => {
             const formData = new FormData();
             formData.append('file', selectedFile);
             formData.append('taskType', taskType);
+            if (recipientEmail) {
+                formData.append('recipientEmail', recipientEmail);
+            }
 
             const token = localStorage.getItem('token');
 
@@ -88,6 +143,26 @@ const AssignmentWorkspace = () => {
             console.error('Error running automation:', error);
             setStatus('idle');
             alert(error.response?.data?.message || 'Failed to run automation. Please try again.');
+        }
+    };
+
+    const handleSendManual = async (target) => {
+        if (!generatedContent) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post('http://localhost:3000/api/activities/send-manual', {
+                recipientEmail: target || recipientEmail,
+                title: assignment?.title || 'Generated Task',
+                content: generatedContent,
+                fileName: selectedFile?.name || 'document'
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            alert(response.data.message);
+        } catch (error) {
+            alert('Failed to send email: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -152,7 +227,39 @@ const AssignmentWorkspace = () => {
                         </p>
                     </div>
                     {status === 'completed' && (
-                        <button className="btn-primary" style={{ width: 'auto', background: '#10b981' }}>
+                        <button
+                            className="btn-primary"
+                            style={{ width: 'auto', background: '#10b981' }}
+                            onClick={() => {
+                                // Generate formatted report
+                                let reportText = `EduSaarthi Automation Report\n==========================\n\n`;
+                                reportText += `Date: ${new Date().toLocaleString()}\n`;
+                                reportText += `File: ${selectedFile?.name || 'Unknown'}\n`;
+                                reportText += `Task: ${taskType === 'question_generation' ? 'Question Generation' : 'Email Automation'}\n\n`;
+
+                                reportText += `RESULTS\n-------\n\n`;
+
+                                if (generatedContent.type === 'questions' && Array.isArray(generatedContent.data)) {
+                                    generatedContent.data.forEach(q => {
+                                        reportText += `${q}\n`;
+                                    });
+                                } else if (generatedContent.type === 'email' && generatedContent.data) {
+                                    reportText += `Subject: ${generatedContent.data.subject}\n\n`;
+                                    reportText += `${generatedContent.data.body}\n`;
+                                } else {
+                                    reportText += JSON.stringify(generatedContent.data, null, 2);
+                                }
+
+                                reportText += `\n\nGenerated by EduSaarthi AI`;
+
+                                const element = document.createElement("a");
+                                const file = new Blob([reportText], { type: 'text/plain' });
+                                element.href = URL.createObjectURL(file);
+                                element.download = `automation-report-${Date.now()}.txt`;
+                                document.body.appendChild(element);
+                                element.click();
+                            }}
+                        >
                             <Download size={18} /> Download Package
                         </button>
                     )}
@@ -239,6 +346,8 @@ const AssignmentWorkspace = () => {
                         </select>
                     </div>
 
+
+
                     <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px' }}>
                         <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Sparkles size={18} color="var(--primary)" /> AI Configuration
@@ -297,6 +406,76 @@ const AssignmentWorkspace = () => {
                                     </div>
                                 </div>
                             )}
+
+                            <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '16px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h4 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                                        <Users size={18} color="var(--primary)" /> Recipients & Groups
+                                    </h4>
+                                    {recipientGroups.length > 0 && (
+                                        <select
+                                            onChange={(e) => setRecipientEmail(e.target.value)}
+                                            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem' }}
+                                        >
+                                            <option value="">Select Group...</option>
+                                            {recipientGroups.map(group => (
+                                                <option key={group._id} value={group.emails.join(', ')} style={{ color: 'black' }}>
+                                                    {group.name} ({group.emails.length})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. student1@test.com, student2@test.com"
+                                        value={recipientEmail}
+                                        onChange={(e) => setRecipientEmail(e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            background: 'rgba(0,0,0,0.2)',
+                                            border: '1px solid var(--glass-border)',
+                                            borderRadius: '12px',
+                                            color: 'white',
+                                            padding: '0.8rem',
+                                            outline: 'none',
+                                            fontSize: '0.875rem'
+                                        }}
+                                    />
+                                    <button
+                                        className="btn-primary"
+                                        style={{ width: 'auto', padding: '0 1.5rem' }}
+                                        onClick={() => handleSendManual()}
+                                    >
+                                        Send Now
+                                    </button>
+                                </div>
+
+                                <div style={{ textAlign: 'right' }}>
+                                    {!showSaveGroup ? (
+                                        <button
+                                            onClick={() => setShowSaveGroup(true)}
+                                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', marginLeft: 'auto' }}
+                                        >
+                                            <Save size={14} /> Save as Group
+                                        </button>
+                                    ) : (
+                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Group Name"
+                                                value={newGroupName}
+                                                onChange={(e) => setNewGroupName(e.target.value)}
+                                                style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                            />
+                                            <button onClick={handleSaveGroup} style={{ background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }}>Save</button>
+                                            <button onClick={() => setShowSaveGroup(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
                             <button
                                 className="btn-primary"

@@ -102,4 +102,71 @@ router.get('/me', protect, async (req, res) => {
     });
 });
 
+/* PUT update user details */
+router.put('/updatedetails', protect, async (req, res) => {
+    try {
+        const fieldsToUpdate = {
+            name: req.body.name,
+            email: req.body.email,
+            username: req.body.username
+        };
+
+        // Filter out undefined fields
+        Object.keys(fieldsToUpdate).forEach(key => fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]);
+
+        const updatedUser = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+            new: true,
+            runValidators: true
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                user: updatedUser
+            }
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+});
+
+/* PUT update password */
+router.put('/updatepassword', protect, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        // 1) Get user from collection
+        const user = await User.findById(req.user.id).select('+password');
+
+        // 2) Check if POSTed current password is correct
+        if (!(await user.correctPassword(currentPassword, user.password))) {
+            return res.status(401).json({
+                status: 'fail',
+                message: 'Your current password is wrong'
+            });
+        }
+
+        // 3) Update password
+        user.password = newPassword;
+        await user.save();
+
+        // 4) Log user in/send JWT
+        const token = signToken(user._id);
+
+        res.status(200).json({
+            status: 'success',
+            token,
+            message: 'Password updated successfully'
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'fail',
+            message: err.message
+        });
+    }
+});
+
 module.exports = router;

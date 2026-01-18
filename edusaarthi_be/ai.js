@@ -3,23 +3,10 @@ const router = express.Router();
 const multer = require("multer");
 const { z } = require("zod"); // Import Zod
 const Resume = require("../models/resume");
-const {
-    ChatGoogleGenerativeAI,
-    GoogleGenerativeAIEmbeddings,
-} = require("@langchain/google-genai");
 // --- IMPORT THE NEW PACKAGE ---
 const pdfParse = require("pdf-parse-new");
 const upload = multer({ storage: multer.memoryStorage() });
-// 2. Gemini Setup
-const model = new ChatGoogleGenerativeAI({
-    apiKey: "AIzaSyBh5xcrHWOQsbV8B9J-4y85Rlnffb2F29U",
-    model: "gemini-2.5-flash",
-});
-const embeddings = new GoogleGenerativeAIEmbeddings({
-    apiKey: "AIzaSyBh5xcrHWOQsbV8B9J-4y85Rlnffb2F29U",
-    model: "text-embedding-004",
-});
-
+const { chatModel: model, embeddingModel: embeddings } = require("./config/aiConfig");
 
 
 

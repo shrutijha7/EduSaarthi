@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Layout, User, Bell, ChevronRight } from 'lucide-react';
 import bannerImg from '../assets/banner.png';
 
 const Dashboard = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -68,7 +70,7 @@ const Dashboard = () => {
                     <button
                         className="btn-primary"
                         style={{ width: 'auto', padding: '0.75rem 1.5rem' }}
-                        onClick={() => window.location.href = '/courses'}
+                        onClick={() => navigate('/courses')}
                     >
                         New Automation <ChevronRight size={18} />
                     </button>
@@ -98,7 +100,11 @@ const Dashboard = () => {
                         activities.map((activity, i) => (
                             <div
                                 key={i}
-                                onClick={() => setSelectedActivity(i)}
+                                onClick={() => {
+                                    setSelectedActivity(i);
+                                    // Navigate to courses/assignments for now as a default action
+                                    navigate('/courses');
+                                }}
                                 style={{
                                     padding: '1.5rem 2rem',
                                     borderBottom: i === activities.length - 1 ? 'none' : '1px solid var(--glass-border)',
