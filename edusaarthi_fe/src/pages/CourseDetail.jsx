@@ -18,6 +18,8 @@ const AssignmentWorkspace = () => {
     const [recipientGroups, setRecipientGroups] = useState([]);
     const [newGroupName, setNewGroupName] = useState('');
     const [showSaveGroup, setShowSaveGroup] = useState(false);
+    const [sendingEmail, setSendingEmail] = useState(false);
+    const [sendSuccess, setSendSuccess] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -120,9 +122,7 @@ const AssignmentWorkspace = () => {
             const formData = new FormData();
             formData.append('file', selectedFile);
             formData.append('taskType', taskType);
-            if (recipientEmail) {
-                formData.append('recipientEmail', recipientEmail);
-            }
+
 
             const token = localStorage.getItem('token');
 
@@ -148,6 +148,8 @@ const AssignmentWorkspace = () => {
 
     const handleSendManual = async (target) => {
         if (!generatedContent) return;
+        setSendingEmail(true);
+        setSendSuccess(false);
 
         try {
             const token = localStorage.getItem('token');
@@ -160,9 +162,13 @@ const AssignmentWorkspace = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            alert(response.data.message);
+            setSendSuccess(true);
+            setTimeout(() => setSendSuccess(false), 3000);
+            // alert(response.data.message); // Optional: keep or remove alert
         } catch (error) {
             alert('Failed to send email: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setSendingEmail(false);
         }
     };
 
@@ -196,348 +202,357 @@ const AssignmentWorkspace = () => {
 
     return (
         <DashboardLayout>
-            {/* ... Header section ... */}
-            <div style={{ marginBottom: '2rem' }}>
-                <button
-                    onClick={() => navigate('/courses')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-muted)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        cursor: 'pointer',
-                        fontSize: '1rem',
-                        marginBottom: '1rem',
-                        transition: 'color 0.2s'
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                    onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                >
-                    <ChevronLeft size={20} /> Back to Assignments
-                </button>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                    <div>
-                        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-                            {loadingAssignment ? 'Loading...' : (assignment?.title || 'Automation Workspace')}
-                        </h1>
-                        <p style={{ color: 'var(--text-muted)' }}>
-                            {assignment ? `Configure automation for ${assignment.title}` : 'Configure and execute your assignment automation workflow.'}
-                        </p>
-                    </div>
-                    {status === 'completed' && (
-                        <button
-                            className="btn-primary"
-                            style={{ width: 'auto', background: '#10b981' }}
-                            onClick={() => {
-                                // Generate formatted report
-                                let reportText = `EduSaarthi Automation Report\n==========================\n\n`;
-                                reportText += `Date: ${new Date().toLocaleString()}\n`;
-                                reportText += `File: ${selectedFile?.name || 'Unknown'}\n`;
-                                reportText += `Task: ${taskType === 'question_generation' ? 'Question Generation' : 'Email Automation'}\n\n`;
-
-                                reportText += `RESULTS\n-------\n\n`;
-
-                                if (generatedContent.type === 'questions' && Array.isArray(generatedContent.data)) {
-                                    generatedContent.data.forEach(q => {
-                                        reportText += `${q}\n`;
-                                    });
-                                } else if (generatedContent.type === 'email' && generatedContent.data) {
-                                    reportText += `Subject: ${generatedContent.data.subject}\n\n`;
-                                    reportText += `${generatedContent.data.body}\n`;
-                                } else {
-                                    reportText += JSON.stringify(generatedContent.data, null, 2);
-                                }
-
-                                reportText += `\n\nGenerated by EduSaarthi AI`;
-
-                                const element = document.createElement("a");
-                                const file = new Blob([reportText], { type: 'text/plain' });
-                                element.href = URL.createObjectURL(file);
-                                element.download = `automation-report-${Date.now()}.txt`;
-                                document.body.appendChild(element);
-                                element.click();
-                            }}
-                        >
-                            <Download size={18} /> Download Package
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '2.5rem' }}>
-                <div className="glass-card" style={{ padding: '2.5rem', maxWidth: 'none' }}>
-                    <div
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={handleContainerClick}
+            <div className="page-transition">
+                {/* ... Header section ... */}
+                <div style={{ marginBottom: '2rem' }}>
+                    <button
+                        onClick={() => navigate('/courses')}
+                        className="animate-slide-up"
                         style={{
-                            border: `2px dashed ${isDragging ? 'var(--primary)' : 'var(--glass-border)'}`,
-                            borderRadius: '24px',
-                            padding: '4rem 2rem',
-                            textAlign: 'center',
-                            background: isDragging ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255,255,255,0.02)',
-                            marginBottom: '2.5rem',
-                            cursor: 'pointer',
-                            marginTop: '2rem',
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <div style={{
-                            width: '64px',
-                            height: '64px',
-                            background: 'var(--primary)',
-                            borderRadius: '16px',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-muted)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            margin: '0 auto 1.5rem',
-                            boxShadow: '0 8px 16px rgba(99, 102, 241, 0.4)'
-                        }}>
-                            <FileUp size={32} color="white" />
-                        </div>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                            {selectedFile ? 'File Selected' : 'Drop assignment brief here'}
-                        </h3>
-                        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                            {selectedFile ? selectedFile.name : 'Support PDF, DOCX, or Image formats'}
-                        </p>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            style={{ display: 'none' }}
-                        />
-                        <button
-                            className="btn-primary"
-                            style={{ width: 'auto', padding: '0.6rem 1.5rem', fontSize: '0.875rem' }}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                fileInputRef.current.click();
-                            }}
-                        >
-                            {selectedFile ? 'Change File' : 'Browse Files'}
-                        </button>
-                    </div>
-
-                    <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
-                        <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Sparkles size={18} color="var(--primary)" /> Select Task
-                        </h4>
-                        <select
-                            value={taskType}
-                            onChange={(e) => setTaskType(e.target.value)}
-                            style={{
-                                width: '100%',
-                                background: 'rgba(0,0,0,0.2)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                padding: '1rem',
-                                outline: 'none',
-                                fontSize: '0.875rem',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            <option value="question_generation" style={{ color: 'black' }}>Question Generation</option>
-                            <option value="email_automation" style={{ color: 'black' }}>Email Automation</option>
-                        </select>
-                    </div>
-
-
-
-                    <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px' }}>
-                        <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Sparkles size={18} color="var(--primary)" /> AI Configuration
-                        </h4>
-                        <textarea
-                            placeholder="Add specific instructions or constraints for the AI (optional)..."
-                            style={{
-                                width: '100%',
-                                height: '120px',
-                                background: 'rgba(0,0,0,0.2)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                padding: '1rem',
-                                resize: 'none',
-                                outline: 'none',
-                                fontSize: '0.875rem'
-                            }}
-                        />
-                    </div>
-
-                    <button
-                        className="btn-primary"
-                        style={{ marginTop: '2.5rem', height: '60px', fontSize: '1.1rem' }}
-                        onClick={handleRunAutomation}
-                        disabled={status === 'processing'}
+                            gap: '0.5rem',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            marginBottom: '1rem',
+                            transition: 'color 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                        onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
                     >
-                        {status === 'processing' ? 'Processing Automation...' : 'Execute Full Automation'}
-                        <ArrowRight size={20} />
+                        <ChevronLeft size={20} /> Back to Assignments
                     </button>
-
-                    {/* Results Section */}
-                    {status === 'completed' && generatedContent && (
-                        <div style={{ animation: 'fadeIn 0.5s ease-in', marginTop: '2rem' }}>
-                            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Generated Results</h2>
-
-                            {generatedContent.type === 'questions' && (
-                                <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
-                                    <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Generated Questions</h3>
-                                    <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-main)', lineHeight: '1.8' }}>
-                                        {generatedContent.data.map((q, idx) => (
-                                            <li key={idx} style={{ marginBottom: '0.5rem' }}>{q}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {generatedContent.type === 'email' && (
-                                <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
-                                    <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Email Draft</h3>
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <strong>Subject:</strong> {generatedContent.data.subject}
-                                    </div>
-                                    <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-muted)' }}>
-                                        {generatedContent.data.body}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '16px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <h4 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                                        <Users size={18} color="var(--primary)" /> Recipients & Groups
-                                    </h4>
-                                    {recipientGroups.length > 0 && (
-                                        <select
-                                            onChange={(e) => setRecipientEmail(e.target.value)}
-                                            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem' }}
-                                        >
-                                            <option value="">Select Group...</option>
-                                            {recipientGroups.map(group => (
-                                                <option key={group._id} value={group.emails.join(', ')} style={{ color: 'black' }}>
-                                                    {group.name} ({group.emails.length})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. student1@test.com, student2@test.com"
-                                        value={recipientEmail}
-                                        onChange={(e) => setRecipientEmail(e.target.value)}
-                                        style={{
-                                            flex: 1,
-                                            background: 'rgba(0,0,0,0.2)',
-                                            border: '1px solid var(--glass-border)',
-                                            borderRadius: '12px',
-                                            color: 'white',
-                                            padding: '0.8rem',
-                                            outline: 'none',
-                                            fontSize: '0.875rem'
-                                        }}
-                                    />
-                                    <button
-                                        className="btn-primary"
-                                        style={{ width: 'auto', padding: '0 1.5rem' }}
-                                        onClick={() => handleSendManual()}
-                                    >
-                                        Send Now
-                                    </button>
-                                </div>
-
-                                <div style={{ textAlign: 'right' }}>
-                                    {!showSaveGroup ? (
-                                        <button
-                                            onClick={() => setShowSaveGroup(true)}
-                                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', marginLeft: 'auto' }}
-                                        >
-                                            <Save size={14} /> Save as Group
-                                        </button>
-                                    ) : (
-                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                            <input
-                                                type="text"
-                                                placeholder="Group Name"
-                                                value={newGroupName}
-                                                onChange={(e) => setNewGroupName(e.target.value)}
-                                                style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                            />
-                                            <button onClick={handleSaveGroup} style={{ background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }}>Save</button>
-                                            <button onClick={() => setShowSaveGroup(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }} className="animate-slide-up delay-100">
+                        <div>
+                            <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
+                                {loadingAssignment ? 'Loading...' : (assignment?.title || 'Automation Workspace')}
+                            </h1>
+                            <p style={{ color: 'var(--text-muted)' }}>
+                                {assignment ? `Configure automation for ${assignment.title}` : 'Configure and execute your assignment automation workflow.'}
+                            </p>
+                        </div>
+                        {status === 'completed' && (
                             <button
                                 className="btn-primary"
-                                style={{ marginTop: '2rem', width: 'auto' }}
-                                onClick={() => { setStatus('idle'); setGeneratedContent(null); setSelectedFile(null); }}
+                                style={{ width: 'auto', background: '#10b981' }}
+                                onClick={() => {
+                                    // Generate formatted report
+                                    let reportText = `EduSaarthi Automation Report\n==========================\n\n`;
+                                    reportText += `Date: ${new Date().toLocaleString()}\n`;
+                                    reportText += `File: ${selectedFile?.name || 'Unknown'}\n`;
+                                    reportText += `Task: ${taskType === 'question_generation' ? 'Question Generation' : 'Email Automation'}\n\n`;
+
+                                    reportText += `RESULTS\n-------\n\n`;
+
+                                    if (generatedContent.type === 'questions' && Array.isArray(generatedContent.data)) {
+                                        generatedContent.data.forEach(q => {
+                                            reportText += `${q}\n`;
+                                        });
+                                    } else if (generatedContent.type === 'email' && generatedContent.data) {
+                                        reportText += `Subject: ${generatedContent.data.subject}\n\n`;
+                                        reportText += `${generatedContent.data.body}\n`;
+                                    } else {
+                                        reportText += JSON.stringify(generatedContent.data, null, 2);
+                                    }
+
+                                    reportText += `\n\nGenerated by EduSaarthi AI`;
+
+                                    const element = document.createElement("a");
+                                    const file = new Blob([reportText], { type: 'text/plain' });
+                                    element.href = URL.createObjectURL(file);
+                                    element.download = `automation-report-${Date.now()}.txt`;
+                                    document.body.appendChild(element);
+                                    element.click();
+                                }}
                             >
-                                Run Another Task
+                                <Download size={18} /> Download Package
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '2.5rem' }}>
+                    <div className="glass-card" style={{ padding: '2.5rem', maxWidth: 'none' }}>
+                        <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={handleContainerClick}
+                            style={{
+                                border: `2px dashed ${isDragging ? 'var(--primary)' : 'var(--glass-border)'}`,
+                                borderRadius: '24px',
+                                padding: '4rem 2rem',
+                                textAlign: 'center',
+                                background: isDragging ? 'rgba(196, 164, 132, 0.1)' : 'rgba(255,255,255,0.02)',
+                                marginBottom: '2.5rem',
+                                cursor: 'pointer',
+                                marginTop: '2rem',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <div style={{
+                                width: '64px',
+                                height: '64px',
+                                background: 'var(--primary)',
+                                borderRadius: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                margin: '0 auto 1.5rem',
+                                boxShadow: '0 8px 16px rgba(196, 164, 132, 0.4)'
+                            }}>
+                                <FileUp size={32} color="white" />
+                            </div>
+                            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+                                {selectedFile ? 'File Selected' : 'Drop assignment brief here'}
+                            </h3>
+                            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                                {selectedFile ? selectedFile.name : 'Support PDF, DOCX, or Image formats'}
+                            </p>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                className="btn-primary"
+                                style={{ width: 'auto', padding: '0.6rem 1.5rem', fontSize: '0.875rem' }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fileInputRef.current.click();
+                                }}
+                            >
+                                {selectedFile ? 'Change File' : 'Browse Files'}
                             </button>
                         </div>
-                    )}
-                </div>
 
-                <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none', height: 'fit-content' }}>
-                    <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Workflow Status</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        {automationSteps.map((step, i) => (
-                            <div key={i} style={{
-                                display: 'flex',
-                                gap: '1.25rem',
-                                opacity: status === 'idle' ? 0.5 : 1,
-                                transition: 'opacity 0.3s'
-                            }}>
-                                <div style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '10px',
-                                    background: status === 'completed' ? '#10b981' : (status === 'processing' ? 'var(--primary)' : 'rgba(255,255,255,0.05)'),
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                    transition: 'all 0.3s'
-                                }}>
-                                    <step.icon size={20} color="white" />
+                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
+                            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Sparkles size={18} color="var(--primary)" /> Select Task
+                            </h4>
+                            <select
+                                value={taskType}
+                                onChange={(e) => setTaskType(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    border: '1px solid var(--glass-border)',
+                                    borderRadius: '12px',
+                                    color: 'white',
+                                    padding: '1rem',
+                                    outline: 'none',
+                                    fontSize: '0.875rem',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value="question_generation" style={{ color: 'black' }}>Question Generation</option>
+                                <option value="email_automation" style={{ color: 'black' }}>Email Automation</option>
+                            </select>
+                        </div>
+
+
+
+                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px' }}>
+                            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Sparkles size={18} color="var(--primary)" /> AI Configuration
+                            </h4>
+                            <textarea
+                                placeholder="Add specific instructions or constraints for the AI (optional)..."
+                                style={{
+                                    width: '100%',
+                                    height: '120px',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    border: '1px solid var(--glass-border)',
+                                    borderRadius: '12px',
+                                    color: 'white',
+                                    padding: '1rem',
+                                    resize: 'none',
+                                    outline: 'none',
+                                    fontSize: '0.875rem'
+                                }}
+                            />
+                        </div>
+
+                        <button
+                            className="btn-primary"
+                            style={{ marginTop: '2.5rem', height: '60px', fontSize: '1.1rem' }}
+                            onClick={handleRunAutomation}
+                            disabled={status === 'processing'}
+                        >
+                            {status === 'processing' ? 'Processing Automation...' : 'Execute Full Automation'}
+                            <ArrowRight size={20} />
+                        </button>
+
+                        {/* Results Section */}
+                        {status === 'completed' && generatedContent && (
+                            <div style={{ animation: 'fadeIn 0.5s ease-in', marginTop: '2rem' }}>
+                                <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Generated Results</h2>
+
+                                {generatedContent.type === 'questions' && (
+                                    <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
+                                        <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Generated Questions</h3>
+                                        <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-main)', lineHeight: '1.8' }}>
+                                            {generatedContent.data.map((q, idx) => (
+                                                <li key={idx} style={{ marginBottom: '0.5rem' }}>{q}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {generatedContent.type === 'email' && (
+                                    <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
+                                        <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Email Draft</h3>
+                                        <div style={{ marginBottom: '1rem' }}>
+                                            <strong>Subject:</strong> {generatedContent.data.subject}
+                                        </div>
+                                        <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-muted)' }}>
+                                            {generatedContent.data.body}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(var(--primary-rgb), 0.08)', borderRadius: '16px', border: '1px solid rgba(var(--primary-rgb), 0.15)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <h4 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                                            <Users size={18} color="var(--primary)" /> Recipients & Groups
+                                        </h4>
+                                        {recipientGroups.length > 0 && (
+                                            <select
+                                                onChange={(e) => setRecipientEmail(e.target.value)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem' }}
+                                            >
+                                                <option value="">Select Group...</option>
+                                                {recipientGroups.map(group => (
+                                                    <option key={group._id} value={group.emails.join(', ')} style={{ color: 'black' }}>
+                                                        {group.name} ({group.emails.length})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. student1@test.com, student2@test.com"
+                                            value={recipientEmail}
+                                            onChange={(e) => setRecipientEmail(e.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--glass-border)',
+                                                borderRadius: '12px',
+                                                color: 'white',
+                                                padding: '0.8rem',
+                                                outline: 'none',
+                                                fontSize: '0.875rem'
+                                            }}
+                                        />
+                                        <button
+                                            className="btn-primary"
+                                            style={{
+                                                width: 'auto',
+                                                padding: '0 1.5rem',
+                                                background: sendSuccess ? '#10b981' : (sendingEmail ? 'rgba(var(--primary-rgb), 0.6)' : ''),
+                                                borderColor: sendSuccess ? '#10b981' : ''
+                                            }}
+                                            onClick={() => handleSendManual()}
+                                            disabled={sendingEmail}
+                                        >
+                                            {sendingEmail ? 'Sending...' : (sendSuccess ? 'Email Sent!' : 'Send Now')}
+                                        </button>
+                                    </div>
+
+                                    <div style={{ textAlign: 'right' }}>
+                                        {!showSaveGroup ? (
+                                            <button
+                                                onClick={() => setShowSaveGroup(true)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', marginLeft: 'auto' }}
+                                            >
+                                                <Save size={14} /> Save as Group
+                                            </button>
+                                        ) : (
+                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Group Name"
+                                                    value={newGroupName}
+                                                    onChange={(e) => setNewGroupName(e.target.value)}
+                                                    style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                                />
+                                                <button onClick={handleSaveGroup} style={{ background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }}>Save</button>
+                                                <button onClick={() => setShowSaveGroup(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.25rem' }}>{step.title}</div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{step.description}</div>
-                                </div>
+
+                                <button
+                                    className="btn-primary"
+                                    style={{ marginTop: '2rem', width: 'auto' }}
+                                    onClick={() => { setStatus('idle'); setGeneratedContent(null); setSelectedFile(null); }}
+                                >
+                                    Run Another Task
+                                </button>
                             </div>
-                        ))}
+                        )}
                     </div>
 
-                    {status === 'completed' && (
-                        <div style={{
-                            marginTop: '2rem',
-                            padding: '1rem',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(16, 185, 129, 0.2)',
-                            fontSize: '0.875rem',
-                            color: '#34d399',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                        }}>
-                            <ShieldCheck size={18} /> All checks passed. Ready for review.
+                    <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none', height: 'fit-content' }}>
+                        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Workflow Status</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            {automationSteps.map((step, i) => (
+                                <div key={i} style={{
+                                    display: 'flex',
+                                    gap: '1.25rem',
+                                    opacity: status === 'idle' ? 0.5 : 1,
+                                    transition: 'opacity 0.3s'
+                                }}>
+                                    <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        borderRadius: '10px',
+                                        background: status === 'completed' ? '#10b981' : (status === 'processing' ? 'var(--primary)' : 'rgba(255,255,255,0.05)'),
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                        transition: 'all 0.3s'
+                                    }}>
+                                        <step.icon size={20} color="white" />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.25rem' }}>{step.title}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{step.description}</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    )}
+
+                        {status === 'completed' && (
+                            <div style={{
+                                marginTop: '2rem',
+                                padding: '1rem',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(16, 185, 129, 0.2)',
+                                fontSize: '0.875rem',
+                                color: '#34d399',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <ShieldCheck size={18} /> All checks passed. Ready for review.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
-        </DashboardLayout>
+        </DashboardLayout >
     );
 };
 

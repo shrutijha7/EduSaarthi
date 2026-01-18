@@ -5,8 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
 const Settings = () => {
-    const { user, logout } = useAuth(); // usage of user from context as initial state
+    const { user, setUser, logout } = useAuth(); // usage of user from context as initial state
     const [localUser, setLocalUser] = useState({ name: '', email: '', username: '' });
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
     // UI States
     const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -21,6 +22,7 @@ const Settings = () => {
         if (user) {
             setLocalUser({ name: user.name, email: user.email, username: user.username });
             setProfileForm({ name: user.name, email: user.email, username: user.username });
+            setNotificationsEnabled(user.notificationsEnabled !== false); // default to true
         }
     }, [user]);
 
@@ -33,15 +35,34 @@ const Settings = () => {
             });
 
             if (res.data.status === 'success') {
-                setLocalUser(res.data.data.user);
+                const updatedUser = res.data.data.user;
+                setLocalUser(updatedUser);
+                setUser(updatedUser); // Update global context
                 setIsEditingProfile(false);
                 setStatusMessage({ type: 'success', text: 'Profile updated successfully!' });
-
-                // Optional: Update context if we exposed a refetch method, 
-                // but for now local update is fine for visual feedback.
             }
         } catch (error) {
             setStatusMessage({ type: 'error', text: error.response?.data?.message || 'Update failed' });
+        }
+    };
+
+    const handleNotificationToggle = async () => {
+        const newValue = !notificationsEnabled;
+        setNotificationsEnabled(newValue);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.put('http://localhost:3000/api/auth/updatedetails',
+                { notificationsEnabled: newValue },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.status === 'success') {
+                setUser(res.data.data.user); // Update global context
+                setStatusMessage({ type: 'success', text: 'Notification preferences updated!' });
+            }
+        } catch (error) {
+            setNotificationsEnabled(!newValue); // revert on error
+            setStatusMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update notifications' });
         }
     };
 
@@ -174,7 +195,7 @@ const Settings = () => {
                     </div>
                 </div>
 
-                {/* NOTIFICATIONS SECTION (Static for now) */}
+                {/* NOTIFICATIONS SECTION */}
                 <div style={{ padding: '2rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <Bell size={24} color="var(--primary)" />
                     <div style={{ flex: 1 }}>
@@ -183,14 +204,22 @@ const Settings = () => {
                     </div>
                     <div>
                         <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '50px', height: '28px' }}>
-                            <input type="checkbox" defaultChecked style={{ opacity: 0, width: 0, height: 0 }} />
+                            <input
+                                type="checkbox"
+                                checked={notificationsEnabled}
+                                onChange={handleNotificationToggle}
+                                style={{ opacity: 0, width: 0, height: 0 }}
+                            />
                             <span style={{
                                 position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
-                                backgroundColor: 'rgba(255,255,255,0.1)', transition: '.4s', borderRadius: '34px',
+                                backgroundColor: notificationsEnabled ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.1)',
+                                transition: '.4s', borderRadius: '34px',
                                 border: '1px solid var(--glass-border)'
                             }}>
                                 <span style={{
-                                    position: 'absolute', content: '""', height: '20px', width: '20px', left: '4px', bottom: '3px',
+                                    position: 'absolute', content: '""', height: '20px', width: '20px',
+                                    left: notificationsEnabled ? '26px' : '4px',
+                                    bottom: '3px',
                                     backgroundColor: 'var(--primary)', transition: '.4s', borderRadius: '50%'
                                 }}></span>
                             </span>
@@ -272,14 +301,45 @@ const Settings = () => {
                 </div>
 
                 {/* APPEARANCE SECTION */}
-                <div style={{ padding: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Moon size={24} color="var(--primary)" />
-                    <div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Appearance</h3>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Customize the interface theme</p>
+                <div style={{ padding: '2rem', borderTop: '1px solid var(--glass-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <Moon size={24} color="var(--primary)" />
+                        <div>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Appearance</h3>
+                            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Customize the interface theme and accent color</p>
+                        </div>
                     </div>
-                    <div style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.875rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '20px' }}>
-                        Dark Mode Active
+
+                    <div style={{ display: 'flex', gap: '1rem', marginLeft: '3.5rem' }}>
+                        {[
+                            { name: 'Dark Beige', color: '#c4a484' },
+                            { name: 'Earthy Blue', color: '#5C7C89' },
+                            { name: 'Deep Teal', color: '#1F4959' },
+                            { name: 'Midnight', color: '#011425' },
+                            { name: 'Sage', color: '#7c895c' }
+                        ].map((theme) => (
+                            <button
+                                key={theme.name}
+                                onClick={() => {
+                                    document.documentElement.style.setProperty('--primary', theme.color);
+                                    localStorage.setItem('themeColor', theme.color);
+                                    setStatusMessage({ type: 'success', text: `Theme changed to ${theme.name}` });
+                                }}
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    background: theme.color,
+                                    border: '2px solid white',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                title={theme.name}
+                            />
+                        ))}
                     </div>
                 </div>
 

@@ -28,6 +28,13 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const App = () => {
+  React.useEffect(() => {
+    const savedColor = localStorage.getItem('themeColor');
+    if (savedColor) {
+      document.documentElement.style.setProperty('--primary', savedColor);
+    }
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

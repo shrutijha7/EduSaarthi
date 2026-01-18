@@ -108,7 +108,8 @@ router.put('/updatedetails', protect, async (req, res) => {
         const fieldsToUpdate = {
             name: req.body.name,
             email: req.body.email,
-            username: req.body.username
+            username: req.body.username,
+            notificationsEnabled: req.body.notificationsEnabled
         };
 
         // Filter out undefined fields

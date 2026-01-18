@@ -31,7 +31,7 @@ const Dashboard = () => {
     }, []);
 
     const stats = [
-        { title: 'Total Assignments', value: '12', icon: Layout, color: '#6366f1' },
+        { title: 'Total Assignments', value: '12', icon: Layout, color: 'var(--primary)' },
         { title: 'Files Processed', value: '156', icon: User, color: '#10b981' },
         { title: 'Hours Saved', value: '42.5', icon: Bell, color: '#f59e0b' }
     ];

@@ -1,11 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Bell, Settings, Search, LayoutGrid, BookOpen, Clock, Zap } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [activities, setActivities] = useState([]);
+    const notificationRef = useRef(null);
+
+    useEffect(() => {
+        const fetchActivities = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const response = await axios.get('http://localhost:3000/api/activities', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setActivities(response.data.data.activities.slice(0, 5));
+                }
+            } catch (error) {
+                console.error('Error fetching activities:', error);
+            }
+        };
+
+        fetchActivities();
+
+        const handleClickOutside = (event) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getRelativeTime = (date) => {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - new Date(date)) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+
+        const days = Math.floor(diffInSeconds / 86400);
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return `${days}d ago`;
+
+        return new Date(date).toLocaleDateString();
+    };
 
     return (
         <div className="dashboard-layout">
@@ -62,9 +108,54 @@ const Layout = ({ children }) => {
                         <input type="text" placeholder="Search assignments, logs..." />
                     </div>
                     <div className="top-nav-actions">
-                        <div className="icon-badge" title="Notifications">
+                        <div
+                            className="icon-badge"
+                            title="Notifications"
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            ref={notificationRef}
+                        >
                             <Bell size={20} />
-                            <span className="badge-dot"></span>
+                            {activities.length > 0 && <span className="badge-dot"></span>}
+
+                            {showNotifications && (
+                                <div className="notifications-dropdown glass-card">
+                                    <div className="notifications-header">
+                                        <h3>Recent Notifications</h3>
+                                    </div>
+                                    <div className="notifications-list">
+                                        {activities.length > 0 ? (
+                                            activities.map((activity, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="notification-item"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate('/dashboard');
+                                                        setShowNotifications(false);
+                                                    }}
+                                                >
+                                                    <div className="notification-icon">
+                                                        <Zap size={14} />
+                                                    </div>
+                                                    <div className="notification-content">
+                                                        <p className="notification-title">{activity.title}</p>
+                                                        <p className="notification-time">{getRelativeTime(activity.createdAt)}</p>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="no-notifications">No new notifications</div>
+                                        )}
+                                    </div>
+                                    <div className="notifications-footer" onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate('/dashboard');
+                                        setShowNotifications(false);
+                                    }}>
+                                        View all history
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="user-profile-small" style={{ cursor: 'pointer' }} onClick={() => navigate('/settings')}>
                             <div className="avatar-circle">

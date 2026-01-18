@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
         minlength: 8,
         select: false
     },
+    notificationsEnabled: {
+        type: Boolean,
+        default: true
+    },
     role: {
         type: String,
         enum: ['user', 'admin'],

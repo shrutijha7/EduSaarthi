@@ -81,22 +81,10 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
             type: taskType || 'automation'
         });
 
-        // AUTOMATED EMAIL SENDING
-        const recipientData = req.body.recipientEmail || req.user.email;
-
-        if (generatedContent && recipientData) {
-            // Split by comma if it's a string, or treat as array
-            const emails = typeof recipientData === 'string'
-                ? recipientData.split(',').map(e => e.trim()).filter(e => e)
-                : [recipientData];
-
-            console.log(`Sending emails to: ${emails.join(', ')}...`);
-            const emailHtml = formatEmailBody(activityTitle, generatedContent, req.file.originalname);
-
-            // Send to each recipient
-            for (const email of emails) {
-                await sendEmail(email, `Edusaarthi: ${activityTitle}`, emailHtml);
-            }
+        // 6. Send Email Notification if enabled
+        if (req.user.notificationsEnabled !== false) {
+            const emailHtml = formatEmailBody(activityTitle, generatedContent || { type: 'status', data: activityDescription }, req.file.originalname);
+            await sendEmail(req.user.email, `Automation Complete: ${activityTitle}`, emailHtml);
         }
 
         // Cleanup uploaded file if using diskStorage temporary
@@ -119,18 +107,30 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
 
 // Helper function to format email body
 const formatEmailBody = (title, content, fileName) => {
-    let html = `<h2>${title}</h2><p>Here is the content generated from your file: <strong>${fileName}</strong></p>`;
+    let html = `<div style="font-family: sans-serif; padding: 20px; color: #333;">`;
+    html += `<h2 style="color: #6366f1;">${title}</h2>`;
+    html += `<p>Assignment Automation Update for: <strong>${fileName}</strong></p>`;
+    html += `<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;
 
-    if (content.type === 'questions') {
-        html += '<ul>';
-        content.data.forEach(q => html += `<li>${q}</li>`);
+    if (content.type === 'questions' && Array.isArray(content.data)) {
+        html += '<p>The following questions were generated:</p><ul>';
+        content.data.forEach(q => html += `<li style="margin-bottom: 10px;">${q}</li>`);
         html += '</ul>';
-    } else if (content.type === 'email') {
-        html += `<h3>Subject: ${content.data.subject}</h3>`;
-        html += `<div>${content.data.body.replace(/\n/g, '<br>')}</div>`;
+    } else if (content.type === 'email' && content.data) {
+        html += `<p>A draft has been prepared:</p>`;
+        html += `<div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">`;
+        html += `<p><strong>Subject:</strong> ${content.data.subject}</p>`;
+        html += `<p>${content.data.body?.replace(/\n/g, '<br>')}</p>`;
+        html += `</div>`;
+    } else if (content.type === 'status') {
+        html += `<p>${content.data}</p>`;
+    } else {
+        html += `<p>Your task has been processed successfully. You can view the results in your dashboard.</p>`;
     }
 
-    html += '<br><p>Thank you for using Edusaarthi!</p>';
+    html += `<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;
+    html += `<p style="font-size: 0.8rem; color: #6b7280;">This is an automated notification from Edusaarthi AI. You can disable these emails in your Settings.</p>`;
+    html += `</div>`;
     return html;
 };
 
