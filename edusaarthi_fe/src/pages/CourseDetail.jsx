@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Users, Save, Trash2 } from 'lucide-react';
 
-import axios from 'axios';
+import api from '../utils/api';
 
 const AssignmentWorkspace = () => {
     const { id } = useParams();
@@ -30,9 +30,7 @@ const AssignmentWorkspace = () => {
                     navigate('/login');
                     return;
                 }
-                const response = await axios.get(`http://localhost:3000/api/courses/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await api.get(`/api/courses/${id}`);
                 setAssignment(response.data.data.course);
             } catch (error) {
                 console.error('Error fetching assignment details:', error);
@@ -44,9 +42,7 @@ const AssignmentWorkspace = () => {
         const fetchGroups = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get(`http://localhost:3000/api/recipient-groups`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await api.get(`/api/recipient-groups`);
                 setRecipientGroups(response.data.data.groups);
             } catch (error) {
                 console.error('Error fetching recipient groups:', error);
@@ -67,9 +63,8 @@ const AssignmentWorkspace = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(`http://localhost:3000/api/recipient-groups`,
-                { name: newGroupName, emails: recipientEmail },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const response = await api.post(`/api/recipient-groups`,
+                { name: newGroupName, emails: recipientEmail }
             );
 
             setRecipientGroups([...recipientGroups, response.data.data.group]);
@@ -86,9 +81,7 @@ const AssignmentWorkspace = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:3000/api/recipient-groups/${groupId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/api/recipient-groups/${groupId}`);
             setRecipientGroups(recipientGroups.filter(g => g._id !== groupId));
         } catch (error) {
             alert('Failed to delete group');
@@ -126,11 +119,7 @@ const AssignmentWorkspace = () => {
 
             const token = localStorage.getItem('token');
 
-            const response = await axios.post('http://localhost:3000/api/activities/generate', formData, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const response = await api.post('/api/activities/generate', formData);
 
             if (response.data.data.generatedContent) {
                 setGeneratedContent(response.data.data.generatedContent);
@@ -153,13 +142,11 @@ const AssignmentWorkspace = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('http://localhost:3000/api/activities/send-manual', {
+            const response = await api.post('/api/activities/send-manual', {
                 recipientEmail: target || recipientEmail,
                 title: assignment?.title || 'Generated Task',
                 content: generatedContent,
                 fileName: selectedFile?.name || 'document'
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             setSendSuccess(true);

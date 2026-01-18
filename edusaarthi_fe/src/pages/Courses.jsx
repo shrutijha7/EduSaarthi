@@ -1,5 +1,5 @@
 import React from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import DashboardLayout from '../components/DashboardLayout';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Star, User, ChevronRight, Plus, X, Edit3, Trash2 } from 'lucide-react';
@@ -28,9 +28,7 @@ const Assignments = () => {
         const fetchAssignments = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get('http://localhost:3000/api/courses', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await api.get('/api/courses');
 
                 const imageMap = {
                     'react_course': reactThumb,
@@ -78,9 +76,7 @@ const Assignments = () => {
                 instructor: newItem.instructor,
                 imageName: randomImg
             };
-            const response = await axios.post('http://localhost:3000/api/courses', payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.post('/api/courses', payload);
 
             // Optimistically update or append the new item
             const imageMap = {
@@ -121,9 +117,7 @@ const Assignments = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:3000/api/courses/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.delete(`/api/courses/${id}`);
             setAssignments(prev => prev.filter(a => a._id !== id));
         } catch (error) {
             console.error('Error deleting assignment:', error);
@@ -145,12 +139,10 @@ const Assignments = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.patch(`http://localhost:3000/api/courses/${editItem.id}`, {
+            const response = await api.patch(`/api/courses/${editItem.id}`, {
                 title: editItem.title,
                 category: editItem.category,
                 instructor: editItem.instructor
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (response.data && response.data.data && response.data.data.course) {

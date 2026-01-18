@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -16,9 +16,7 @@ const Dashboard = () => {
         const fetchActivities = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get('http://localhost:3000/api/activities', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await api.get('/api/activities');
                 setActivities(response.data.data.activities);
             } catch (error) {
                 console.error('Error fetching activities:', error);

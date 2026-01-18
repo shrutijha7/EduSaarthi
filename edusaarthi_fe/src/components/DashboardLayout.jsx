@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Bell, Settings, Search, LayoutGrid, BookOpen, Clock, Zap } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -16,9 +16,7 @@ const Layout = ({ children }) => {
             try {
                 const token = localStorage.getItem('token');
                 if (token) {
-                    const response = await axios.get('http://localhost:3000/api/activities', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    const response = await api.get('/api/activities');
                     setActivities(response.data.data.activities.slice(0, 5));
                 }
             } catch (error) {

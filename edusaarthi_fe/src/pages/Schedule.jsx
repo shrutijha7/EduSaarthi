@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import DashboardLayout from '../components/DashboardLayout';
 import { Calendar, Clock, Zap, FileText, CheckCircle2, History, Loader2, AlertCircle } from 'lucide-react';
 
@@ -9,13 +9,14 @@ const Schedule = () => {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [error, setError] = useState(null);
 
+    // Calendar States
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [viewDate, setViewDate] = useState(new Date());
+
     useEffect(() => {
         const fetchActivities = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get('http://localhost:3000/api/activities', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await api.get('/api/activities');
                 setActivities(response.data.data.activities);
                 setLoading(false);
             } catch (error) {
@@ -28,10 +29,59 @@ const Schedule = () => {
         fetchActivities();
     }, []);
 
-    const handleAction = (e, action, title) => {
-        e.stopPropagation();
-        // Placeholder for real action
+    const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+    const generateCalendarDays = () => {
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+        const days = [];
+        const totalDays = daysInMonth(year, month);
+        const startingDay = firstDayOfMonth(year, month);
+
+        // Padding for previous month
+        for (let i = 0; i < startingDay; i++) {
+            days.push({ day: null, currentMonth: false });
+        }
+
+        // Current month days
+        for (let i = 1; i <= totalDays; i++) {
+            days.push({
+                day: i,
+                currentMonth: true,
+                date: new Date(year, month, i)
+            });
+        }
+
+        return days;
     };
+
+    const isSelected = (date) => {
+        return date &&
+            date.getDate() === selectedDate.getDate() &&
+            date.getMonth() === selectedDate.getMonth() &&
+            date.getFullYear() === selectedDate.getFullYear();
+    };
+
+    const hasActivity = (date) => {
+        if (!date) return false;
+        return activities.some(act => {
+            const actDate = new Date(act.createdAt);
+            return actDate.getDate() === date.getDate() &&
+                actDate.getMonth() === date.getMonth() &&
+                actDate.getFullYear() === date.getFullYear();
+        });
+    };
+
+    const filteredActivities = activities.filter(act => {
+        const actDate = new Date(act.createdAt);
+        return actDate.getDate() === selectedDate.getDate() &&
+            actDate.getMonth() === selectedDate.getMonth() &&
+            actDate.getFullYear() === selectedDate.getFullYear();
+    });
+
+    const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+    const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
 
     if (loading) {
         return (
@@ -57,25 +107,26 @@ const Schedule = () => {
                 gap: '2.5rem',
                 alignItems: 'start'
             }}>
+                {/* History Section */}
                 <div className="glass-card" style={{ padding: '0', maxWidth: 'none', overflow: 'hidden' }}>
-                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(31, 73, 89, 0.1)' }}>
+                    <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(var(--primary-rgb), 0.05)' }}>
                         <h2 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <History size={20} color="var(--primary)" /> Execution History
+                            <History size={20} color="var(--primary)" />
+                            {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} Tasks
                         </h2>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <span className="tag" style={{ background: 'var(--primary)', color: 'white' }}>Live</span>
-                            <span className="tag">Successful</span>
+                            <span className="tag" style={{ background: 'var(--primary)', color: 'white' }}>{filteredActivities.length} Active</span>
                         </div>
                     </div>
 
-                    <div style={{ padding: '0' }}>
-                        {activities.length === 0 ? (
+                    <div style={{ padding: '0', maxHeight: '600px', overflowY: 'auto' }}>
+                        {filteredActivities.length === 0 ? (
                             <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                                 <AlertCircle size={40} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                                <p>No automation tasks found in the history.</p>
+                                <p>No automation tasks for this date.</p>
                             </div>
                         ) : (
-                            activities.map((event, i) => (
+                            filteredActivities.map((event, i) => (
                                 <div
                                     key={event._id}
                                     onClick={() => setSelectedEvent(i)}
@@ -83,63 +134,119 @@ const Schedule = () => {
                                         padding: '1.5rem 2rem',
                                         display: 'flex',
                                         gap: '2rem',
-                                        borderBottom: i === activities.length - 1 ? 'none' : '1px solid var(--glass-border)',
+                                        borderBottom: i === filteredActivities.length - 1 ? 'none' : '1px solid var(--glass-border)',
                                         transition: 'all 0.2s',
                                         cursor: 'pointer',
                                         background: selectedEvent === i ? 'rgba(var(--primary-rgb), 0.08)' : 'transparent',
-                                        boxShadow: selectedEvent === i ? '0 8px 16px rgba(0, 0, 0, 0.4)' : 'transparent',
                                         borderLeft: selectedEvent === i ? '4px solid var(--primary)' : 'none'
                                     }} className="schedule-item">
                                     <div style={{ width: '80px', textAlign: 'right' }}>
                                         <div style={{ fontSize: '0.9rem', fontWeight: '700', color: selectedEvent === i ? 'var(--primary)' : 'inherit' }}>
                                             {new Date(event.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                            {new Date(event.createdAt).toLocaleDateString()}
-                                        </div>
                                     </div>
-
-                                    <div style={{ width: '4px', background: 'var(--primary)', borderRadius: '4px', opacity: selectedEvent === i ? 0 : 0.4 }}></div>
-
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '0.25rem', letterSpacing: '1px' }}>{event.type}</div>
+                                        <div style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{event.type}</div>
                                         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', fontWeight: '600' }}>{event.title}</h3>
                                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{event.description}</div>
                                     </div>
-
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <CheckCircle2 size={20} color="#10b981" />
-                                    </div>
+                                    <CheckCircle2 size={20} color="#10b981" />
                                 </div>
                             ))
                         )}
                     </div>
                 </div>
 
+                {/* Calendar & Details Section */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-                    <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none', background: 'linear-gradient(135deg, rgba(var(--primary-rgb), 0.2), rgba(var(--primary-rgb), 0.1))' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Calendar size={20} color="var(--primary)" /> Task Insight
-                        </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center', marginBottom: '1rem' }}>
+                    {/* Interactive Calendar Card */}
+                    <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Calendar size={20} color="var(--primary)" />
+                                {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                            </h3>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button onClick={prevMonth} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px' }}>&lt;</button>
+                                <button onClick={nextMonth} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px' }}>&gt;</button>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
                             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-                                <div key={day} style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700' }}>{day}</div>
+                                <div key={day} style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '700', paddingBottom: '0.5rem' }}>{day}</div>
                             ))}
-                            {Array.from({ length: 31 }, (_, i) => (
-                                <div key={i} style={{
-                                    padding: '0.5rem',
-                                    fontSize: '0.875rem',
-                                    borderRadius: '8px',
-                                    background: (i + 1) === new Date().getDate() ? 'var(--primary)' : 'none',
-                                    color: (i + 1) === new Date().getDate() ? 'var(--bg-dark)' : 'var(--text-main)',
-                                    fontWeight: (i + 1) === new Date().getDate() ? '700' : '400',
-                                    cursor: 'pointer',
-                                    border: (i + 1) % 7 === 0 ? '1px solid var(--glass-border)' : 'none'
-                                }}>
-                                    {i + 1}
+                            {generateCalendarDays().map((item, i) => (
+                                <div
+                                    key={i}
+                                    onClick={() => item.day && setSelectedDate(item.date)}
+                                    style={{
+                                        position: 'relative',
+                                        padding: '0.75rem 0',
+                                        fontSize: '0.875rem',
+                                        borderRadius: '10px',
+                                        cursor: item.day ? 'pointer' : 'default',
+                                        background: isSelected(item.date) ? 'var(--primary)' : 'none',
+                                        color: isSelected(item.date) ? 'var(--bg-dark)' : (item.day ? 'var(--text-main)' : 'transparent'),
+                                        fontWeight: isSelected(item.date) ? '700' : '400',
+                                        border: item.day ? '1px solid transparent' : 'none',
+                                        transition: 'all 0.2s',
+                                        opacity: item.day ? 1 : 0
+                                    }}
+                                    className={item.day ? "calendar-day" : ""}
+                                >
+                                    {item.day}
+                                    {hasActivity(item.date) && !isSelected(item.date) && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            bottom: '4px',
+                                            left: '50%',
+                                            transform: 'translateX(-50%)',
+                                            width: '4px',
+                                            height: '4px',
+                                            borderRadius: '50%',
+                                            background: 'var(--primary)'
+                                        }}></div>
+                                    )}
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    {/* Task Insight Card (Contextual) */}
+                    <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none', background: 'linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.05))' }}>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)' }}>
+                            <Zap size={18} /> Detailed Insights
+                        </h3>
+
+                        {selectedEvent !== null && filteredActivities[selectedEvent] ? (
+                            <div className="animate-slide-up">
+                                <div style={{ borderLeft: '3px solid var(--primary)', paddingLeft: '1rem', marginBottom: '1.5rem' }}>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem' }}>
+                                        {filteredActivities[selectedEvent].type} Report
+                                    </div>
+                                    <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>{filteredActivities[selectedEvent].title}</h2>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>{filteredActivities[selectedEvent].description}</p>
+                                </div>
+
+                                <div style={{ display: 'grid', gap: '1rem' }}>
+                                    <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Sync ID</div>
+                                        <div style={{ fontSize: '0.85rem', fontFamily: 'monospace', color: 'var(--text-main)' }}>{filteredActivities[selectedEvent]._id}</div>
+                                    </div>
+
+                                    <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Network Latency</div>
+                                        <div style={{ fontWeight: '600', color: '#10b981' }}>Optimized (24ms)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                                <FileText size={32} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Select a task from the list to view its technical breakdown and execution metrics.</p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none' }}>

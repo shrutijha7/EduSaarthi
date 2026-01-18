@@ -66,6 +66,11 @@ const Login = () => {
                                 required
                             />
                         </div>
+                        <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                            <Link to="/forgot-password" style={{ color: 'var(--primary)', fontSize: '0.875rem', textDecoration: 'none' }} onMouseOver={(e) => e.target.style.textDecoration = 'underline'} onMouseOut={(e) => e.target.style.textDecoration = 'none'}>
+                                Forgot Password?
+                            </Link>
+                        </div>
                     </div>
 
                     <button type="submit" className="btn-primary" disabled={loading}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { User, Bell, Shield, Moon, Save, X, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../utils/api';
 
 const Settings = () => {
     const { user, setUser, logout } = useAuth(); // usage of user from context as initial state
@@ -30,9 +30,7 @@ const Settings = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.put('http://localhost:3000/api/auth/updatedetails', profileForm, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.put('/api/auth/updatedetails', profileForm);
 
             if (res.data.status === 'success') {
                 const updatedUser = res.data.data.user;
@@ -51,9 +49,8 @@ const Settings = () => {
         setNotificationsEnabled(newValue);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.put('http://localhost:3000/api/auth/updatedetails',
-                { notificationsEnabled: newValue },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const res = await api.put('/api/auth/updatedetails',
+                { notificationsEnabled: newValue }
             );
 
             if (res.data.status === 'success') {
@@ -70,11 +67,12 @@ const Settings = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.put('http://localhost:3000/api/auth/updatepassword', passwordForm, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.put('/api/auth/updatepassword', passwordForm);
 
             if (res.data.status === 'success') {
+                if (res.data.token) {
+                    localStorage.setItem('token', res.data.token);
+                }
                 setIsChangingPassword(false);
                 setPasswordForm({ currentPassword: '', newPassword: '' });
                 setStatusMessage({ type: 'success', text: 'Password updated successfully!' });
