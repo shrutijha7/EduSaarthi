@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout, User, Bell, ChevronRight } from 'lucide-react';
 import bannerImg from '../assets/banner.png';
 
 const Dashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -94,8 +95,16 @@ const Dashboard = () => {
                 <div className="glass-card" style={{ padding: '0', maxWidth: 'none', overflow: 'hidden' }}>
                     {loading ? (
                         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading logs...</div>
-                    ) : activities.length > 0 ? (
-                        activities.map((activity, i) => (
+                    ) : activities.filter(activity => {
+                        const q = searchParams.get('q')?.toLowerCase() || '';
+                        return activity.title.toLowerCase().includes(q) ||
+                            activity.description.toLowerCase().includes(q);
+                    }).length > 0 ? (
+                        activities.filter(activity => {
+                            const q = searchParams.get('q')?.toLowerCase() || '';
+                            return activity.title.toLowerCase().includes(q) ||
+                                activity.description.toLowerCase().includes(q);
+                        }).map((activity, i) => (
                             <div
                                 key={i}
                                 onClick={() => {
@@ -125,7 +134,7 @@ const Dashboard = () => {
                             </div>
                         ))
                     ) : (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No automation history found.</div>
+                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No activities matching your search.</div>
                     )}
                 </div>
             </section>

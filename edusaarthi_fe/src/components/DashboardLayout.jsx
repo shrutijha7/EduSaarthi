@@ -1,15 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Bell, Settings, Search, LayoutGrid, BookOpen, Clock, Zap } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 
 const Layout = ({ children }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [showNotifications, setShowNotifications] = useState(false);
     const [activities, setActivities] = useState([]);
     const notificationRef = useRef(null);
+
+    const searchQuery = searchParams.get('q') || '';
+
+    const handleSearchChange = (e) => {
+        const query = e.target.value;
+        if (query) {
+            setSearchParams({ q: query });
+        } else {
+            setSearchParams({});
+        }
+    };
 
     useEffect(() => {
         const fetchActivities = async () => {
@@ -103,7 +115,12 @@ const Layout = ({ children }) => {
                 <nav className="top-nav">
                     <div className="search-bar">
                         <Search size={18} />
-                        <input type="text" placeholder="Search assignments, logs..." />
+                        <input
+                            type="text"
+                            placeholder="Search assignments, logs..."
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                        />
                     </div>
                     <div className="top-nav-actions">
                         <div

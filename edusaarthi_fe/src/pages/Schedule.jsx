@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import DashboardLayout from '../components/DashboardLayout';
+import { useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, Zap, FileText, CheckCircle2, History, Loader2, AlertCircle } from 'lucide-react';
 
 const Schedule = () => {
+    const [searchParams] = useSearchParams();
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedEvent, setSelectedEvent] = useState(null);
@@ -75,9 +77,16 @@ const Schedule = () => {
 
     const filteredActivities = activities.filter(act => {
         const actDate = new Date(act.createdAt);
-        return actDate.getDate() === selectedDate.getDate() &&
+        const matchesDate = actDate.getDate() === selectedDate.getDate() &&
             actDate.getMonth() === selectedDate.getMonth() &&
             actDate.getFullYear() === selectedDate.getFullYear();
+
+        const q = searchParams.get('q')?.toLowerCase() || '';
+        const matchesSearch = act.title.toLowerCase().includes(q) ||
+            act.description.toLowerCase().includes(q) ||
+            act.type.toLowerCase().includes(q);
+
+        return matchesDate && matchesSearch;
     });
 
     const nextMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));

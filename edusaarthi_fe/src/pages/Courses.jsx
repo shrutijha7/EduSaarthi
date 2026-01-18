@@ -1,7 +1,7 @@
 import React from 'react';
 import api from '../utils/api';
 import DashboardLayout from '../components/DashboardLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookOpen, Star, User, ChevronRight, Plus, X, Edit3, Trash2 } from 'lucide-react';
 
 // Import themed images
@@ -15,6 +15,7 @@ import docAiThumb from '../assets/document_ai.png';
 import studentThumb from '../assets/student_portal.png';
 
 const Assignments = () => {
+    const [searchParams] = useSearchParams();
     const [assignments, setAssignments] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [selectedAssignment, setSelectedAssignment] = React.useState(null);
@@ -297,7 +298,12 @@ const Assignments = () => {
                 )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
-                    {assignments.map((assignment, i) => (
+                    {assignments.filter(a => {
+                        const q = searchParams.get('q')?.toLowerCase() || '';
+                        return a.title.toLowerCase().includes(q) ||
+                            a.category.toLowerCase().includes(q) ||
+                            a.instructor.toLowerCase().includes(q);
+                    }).map((assignment, i) => (
                         <div
                             key={i}
                             className={`glass-card course-card animate-slide-up delay-${(i % 5) * 100} ${selectedAssignment === assignment._id ? 'selected' : ''}`}
