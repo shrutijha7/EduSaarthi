@@ -31,7 +31,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
             return res.status(400).json({ status: 'fail', message: 'No file uploaded' });
         }
 
-        const { taskType } = req.body;
+        const { taskType, questionCount } = req.body;
         const aiService = require('../services/aiService'); // Import here or at top
 
         // 1. Extract Text
@@ -56,7 +56,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
         if (taskType === 'question_generation') {
             activityTitle = 'Generated Questions';
             activityDescription = `AI-generated questions from ${req.file.originalname}`;
-            const questions = await aiService.generateQuestions(extractedText);
+            const questions = await aiService.generateQuestions(extractedText, parseInt(questionCount) || 5);
             generatedContent = {
                 type: 'questions',
                 data: questions
@@ -102,6 +102,57 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ status: 'error', message: 'Error processing file: ' + err.message });
+    }
+});
+
+// Schedule a task
+router.post('/schedule', protect, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ status: 'fail', message: 'No file uploaded' });
+        }
+
+        const { taskType, questionCount, recipientEmails, scheduledDate } = req.body;
+        const ScheduledTask = require('../models/ScheduledTask');
+
+        if (!scheduledDate) {
+            return res.status(400).json({ status: 'fail', message: 'Scheduled date is required' });
+        }
+
+        const newTask = await ScheduledTask.create({
+            userId: req.user._id,
+            filePath: req.file.path,
+            originalFileName: req.file.originalname,
+            taskType: taskType || 'automation',
+            questionCount: parseInt(questionCount) || 5,
+            recipientEmails: recipientEmails || req.user.email,
+            scheduledDate: new Date(scheduledDate),
+            status: 'pending'
+        });
+
+        res.status(201).json({
+            status: 'success',
+            message: 'Task scheduled successfully',
+            data: { task: newTask }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: 'error', message: 'Error scheduling task: ' + err.message });
+    }
+});
+
+// Get scheduled tasks
+router.get('/scheduled', protect, async (req, res) => {
+    try {
+        const ScheduledTask = require('../models/ScheduledTask');
+        const tasks = await ScheduledTask.find({ userId: req.user._id }).sort('scheduledDate');
+        res.status(200).json({
+            status: 'success',
+            results: tasks.length,
+            data: { tasks }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
     }
 });
 

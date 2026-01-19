@@ -12,6 +12,7 @@ const AssignmentWorkspace = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [taskType, setTaskType] = useState('question_generation');
     const [recipientEmail, setRecipientEmail] = useState('');
+    const [selectedRecipientGroup, setSelectedRecipientGroup] = useState(null);
     const [generatedContent, setGeneratedContent] = useState(null);
     const [assignment, setAssignment] = useState(null);
     const [loadingAssignment, setLoadingAssignment] = useState(true);
@@ -20,6 +21,9 @@ const AssignmentWorkspace = () => {
     const [showSaveGroup, setShowSaveGroup] = useState(false);
     const [sendingEmail, setSendingEmail] = useState(false);
     const [sendSuccess, setSendSuccess] = useState(false);
+    const [questionCount, setQuestionCount] = useState(5);
+    const [scheduledDate, setScheduledDate] = useState('');
+    const [isScheduling, setIsScheduling] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -115,6 +119,7 @@ const AssignmentWorkspace = () => {
             const formData = new FormData();
             formData.append('file', selectedFile);
             formData.append('taskType', taskType);
+            formData.append('questionCount', questionCount);
 
 
             const token = localStorage.getItem('token');
@@ -132,6 +137,39 @@ const AssignmentWorkspace = () => {
             console.error('Error running automation:', error);
             setStatus('idle');
             alert(error.response?.data?.message || 'Failed to run automation. Please try again.');
+        }
+    };
+
+    const handleScheduleAutomation = async () => {
+        if (!selectedFile) {
+            alert('Please select a file first.');
+            return;
+        }
+        if (!scheduledDate) {
+            alert('Please select a date and time for scheduling.');
+            return;
+        }
+
+        setIsScheduling(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('taskType', taskType);
+            formData.append('questionCount', questionCount);
+            formData.append('scheduledDate', scheduledDate);
+            formData.append('recipientEmails', recipientEmail);
+
+            const token = localStorage.getItem('token');
+            await api.post('/api/activities/schedule', formData);
+
+            alert('Task scheduled successfully! It will run at the specified time.');
+            setScheduledDate('');
+        } catch (error) {
+            console.error('Error scheduling automation:', error);
+            alert(error.response?.data?.message || 'Failed to schedule automation.');
+        } finally {
+            setIsScheduling(false);
         }
     };
 
@@ -317,13 +355,20 @@ const AssignmentWorkspace = () => {
                             </button>
                         </div>
 
-                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
+                        {/* Recipient Group Selection - FIRST STEP */}
+                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', border: selectedRecipientGroup ? '2px solid var(--primary)' : '2px solid transparent' }}>
                             <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Sparkles size={18} color="var(--primary)" /> Select Task
+                                <Users size={18} color="var(--primary)" /> Step 1: Select Student Batch
                             </h4>
                             <select
-                                value={taskType}
-                                onChange={(e) => setTaskType(e.target.value)}
+                                value={selectedRecipientGroup?._id || ''}
+                                onChange={(e) => {
+                                    const group = recipientGroups.find(g => g._id === e.target.value);
+                                    setSelectedRecipientGroup(group);
+                                    if (group) {
+                                        setRecipientEmail(group.emails.join(', '));
+                                    }
+                                }}
                                 style={{
                                     width: '100%',
                                     background: 'rgba(0,0,0,0.2)',
@@ -336,12 +381,107 @@ const AssignmentWorkspace = () => {
                                     cursor: 'pointer'
                                 }}
                             >
-                                <option value="question_generation" style={{ color: 'black' }}>Question Generation</option>
-                                <option value="email_automation" style={{ color: 'black' }}>Email Automation</option>
+                                <option value="" style={{ color: 'black' }}>Select a student batch...</option>
+                                {recipientGroups.map(group => (
+                                    <option key={group._id} value={group._id} style={{ color: 'black' }}>
+                                        {group.name} ({group.emails.length} students)
+                                    </option>
+                                ))}
                             </select>
+                            {selectedRecipientGroup && (
+                                <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px', fontSize: '0.8rem' }}>
+                                    <strong>Selected:</strong> {selectedRecipientGroup.name} - {selectedRecipientGroup.emails.join(', ')}
+                                </div>
+                            )}
                         </div>
 
+                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', gap: '1.5rem' }}>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Sparkles size={18} color="var(--primary)" /> Step 2: Select Task
+                                    </h4>
+                                    <select
+                                        value={taskType}
+                                        onChange={(e) => setTaskType(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            background: 'rgba(0,0,0,0.2)',
+                                            border: '1px solid var(--glass-border)',
+                                            borderRadius: '12px',
+                                            color: 'white',
+                                            padding: '1rem',
+                                            outline: 'none',
+                                            fontSize: '0.875rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="question_generation" style={{ color: 'black' }}>Question Generation</option>
+                                        <option value="email_automation" style={{ color: 'black' }}>Email Automation</option>
+                                    </select>
+                                </div>
+                                {taskType === 'question_generation' && (
+                                    <div style={{ width: '150px' }}>
+                                        <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            Count
+                                        </h4>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="20"
+                                            value={questionCount}
+                                            onChange={(e) => setQuestionCount(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--glass-border)',
+                                                borderRadius: '12px',
+                                                color: 'white',
+                                                padding: '1rem',
+                                                outline: 'none',
+                                                fontSize: '0.875rem'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
+                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
+                            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Sparkles size={18} color="var(--primary)" /> Schedule (Optional)
+                            </h4>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <input
+                                    type="datetime-local"
+                                    value={scheduledDate}
+                                    onChange={(e) => setScheduledDate(e.target.value)}
+                                    style={{
+                                        flex: 1,
+                                        background: 'rgba(0,0,0,0.2)',
+                                        border: '1px solid var(--glass-border)',
+                                        borderRadius: '12px',
+                                        color: 'white',
+                                        padding: '1rem',
+                                        outline: 'none',
+                                        fontSize: '0.875rem'
+                                    }}
+                                />
+                                {scheduledDate && (
+                                    <button
+                                        className="btn-primary"
+                                        style={{ width: 'auto', background: 'var(--primary)', borderColor: 'var(--primary)' }}
+                                        onClick={handleScheduleAutomation}
+                                        disabled={isScheduling}
+                                    >
+                                        {isScheduling ? 'Scheduling...' : 'Schedule for Later'}
+                                    </button>
+                                )}
+                            </div>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                                Leave empty to execute immediately.
+                            </p>
+                        </div>
 
                         <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px' }}>
                             <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -366,9 +506,21 @@ const AssignmentWorkspace = () => {
 
                         <button
                             className="btn-primary"
-                            style={{ marginTop: '2.5rem', height: '60px', fontSize: '1.1rem' }}
-                            onClick={handleRunAutomation}
-                            disabled={status === 'processing'}
+                            style={{
+                                marginTop: '2.5rem',
+                                height: '60px',
+                                fontSize: '1.1rem',
+                                opacity: !selectedRecipientGroup ? 0.5 : 1,
+                                cursor: !selectedRecipientGroup ? 'not-allowed' : 'pointer'
+                            }}
+                            onClick={() => {
+                                if (!selectedRecipientGroup) {
+                                    alert('Please select a student batch first (Step 1)');
+                                    return;
+                                }
+                                handleRunAutomation();
+                            }}
+                            disabled={status === 'processing' || !selectedRecipientGroup}
                         >
                             {status === 'processing' ? 'Processing Automation...' : 'Execute Full Automation'}
                             <ArrowRight size={20} />
@@ -405,38 +557,36 @@ const AssignmentWorkspace = () => {
                                 <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(var(--primary-rgb), 0.08)', borderRadius: '16px', border: '1px solid rgba(var(--primary-rgb), 0.15)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                         <h4 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                                            <Users size={18} color="var(--primary)" /> Recipients & Groups
+                                            <Users size={18} color="var(--primary)" /> Send to Selected Batch
                                         </h4>
-                                        {recipientGroups.length > 0 && (
-                                            <select
-                                                onChange={(e) => setRecipientEmail(e.target.value)}
-                                                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem' }}
-                                            >
-                                                <option value="">Select Group...</option>
-                                                {recipientGroups.map(group => (
-                                                    <option key={group._id} value={group.emails.join(', ')} style={{ color: 'black' }}>
-                                                        {group.name} ({group.emails.length})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
                                     </div>
+
+                                    {selectedRecipientGroup && (
+                                        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(var(--primary-rgb), 0.15)', borderRadius: '12px' }}>
+                                            <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                                                <strong>Batch:</strong> {selectedRecipientGroup.name}
+                                            </div>
+                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                <strong>Recipients ({selectedRecipientGroup.emails.length}):</strong> {selectedRecipientGroup.emails.join(', ')}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                                         <input
                                             type="text"
-                                            placeholder="e.g. student1@test.com, student2@test.com"
                                             value={recipientEmail}
-                                            onChange={(e) => setRecipientEmail(e.target.value)}
+                                            readOnly
                                             style={{
                                                 flex: 1,
-                                                background: 'rgba(0,0,0,0.2)',
+                                                background: 'rgba(0,0,0,0.3)',
                                                 border: '1px solid var(--glass-border)',
                                                 borderRadius: '12px',
-                                                color: 'white',
+                                                color: 'var(--text-muted)',
                                                 padding: '0.8rem',
                                                 outline: 'none',
-                                                fontSize: '0.875rem'
+                                                fontSize: '0.875rem',
+                                                cursor: 'not-allowed'
                                             }}
                                         />
                                         <button
@@ -452,29 +602,6 @@ const AssignmentWorkspace = () => {
                                         >
                                             {sendingEmail ? 'Sending...' : (sendSuccess ? 'Email Sent!' : 'Send Now')}
                                         </button>
-                                    </div>
-
-                                    <div style={{ textAlign: 'right' }}>
-                                        {!showSaveGroup ? (
-                                            <button
-                                                onClick={() => setShowSaveGroup(true)}
-                                                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', marginLeft: 'auto' }}
-                                            >
-                                                <Save size={14} /> Save as Group
-                                            </button>
-                                        ) : (
-                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Group Name"
-                                                    value={newGroupName}
-                                                    onChange={(e) => setNewGroupName(e.target.value)}
-                                                    style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                                />
-                                                <button onClick={handleSaveGroup} style={{ background: 'var(--primary)', border: 'none', color: 'white', borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', cursor: 'pointer' }}>Save</button>
-                                                <button onClick={() => setShowSaveGroup(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer' }}>Cancel</button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 

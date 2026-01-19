@@ -13,6 +13,7 @@ var authRouter = require("./routes/auth");
 var coursesRouter = require("./routes/courses");
 var activitiesRouter = require("./routes/activities");
 var recipientGroupsRouter = require("./routes/recipientGroups");
+var { initScheduler } = require("./services/schedulerService");
 
 var app = express();
 
@@ -24,7 +25,10 @@ if (!uri) {
 }
 
 mongoose.connect(uri)
-  .then(() => console.log("Connected to MongoDB Atlas"))
+  .then(() => {
+    console.log("Connected to MongoDB Atlas");
+    initScheduler(); // Start the background task scheduler
+  })
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
 // view engine setup

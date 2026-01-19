@@ -20,11 +20,12 @@ const extractTextFromPDF = async (buffer) => {
 /**
  * Generates questions based on the provided text
  * @param {string} text 
+ * @param {number} count
  * @returns {Promise<string[]>}
  */
-const generateQuestions = async (text) => {
+const generateQuestions = async (text, count = 5) => {
     const prompt = `
-    Analyze the following document text and generate 5 insightful, open-ended questions that test understanding of the key concepts.
+    Analyze the following document text and generate ${count} insightful, open-ended questions that test understanding of the key concepts.
     Return ONLY a JSON array of strings. Do not include markdown formatting like \`\`\`json.
     
     Document Text:
@@ -42,10 +43,14 @@ const generateQuestions = async (text) => {
         return Array.isArray(questions) ? questions : ["Failed to parse questions."];
     } catch (error) {
         console.error("AI Generation Error:", error);
+
+        // Check for quota/rate limit error
+        const isQuotaError = error.message?.includes("429") || error.message?.includes("quota") || error.message?.includes("limit");
+
         return [
             "1. What is the main topic of this document?",
-            "2. improved Could you summarize the key points?",
-            `3. (AI Service Unavailable: ${error.message})`
+            "2. Could you summarize the key points?",
+            `3. (Debug Info: ${error.message})`
         ];
     }
 };
@@ -76,9 +81,11 @@ const generateEmail = async (text, originalName) => {
         return JSON.parse(content);
     } catch (error) {
         console.error("AI Email Generation Error:", error);
+        const isQuotaError = error.message?.includes("429") || error.message?.includes("quota") || error.message?.includes("limit");
+
         return {
             subject: `Review of ${originalName}`,
-            body: `(AI Service Error) Please manually review the document ${originalName}.`
+            body: isQuotaError ? "Note: Our AI service is currently at capacity. Please manually review the document." : `(AI Service Error) Please manually review the document ${originalName}.`
         };
     }
 };

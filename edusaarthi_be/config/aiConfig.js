@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // Consolidated Configuration
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MODEL_NAME = "gemini-2.5-flash"; // Validated as working
+const MODEL_NAME = "gemini-flash-latest"; // Correct alias for latest Flash model
 const EMBEDDING_MODEL = "text-embedding-004";
 
 if (!GEMINI_API_KEY) {
