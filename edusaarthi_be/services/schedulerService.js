@@ -36,13 +36,13 @@ const executeTask = async (task) => {
                 type: 'questions',
                 data: questions
             };
-        } else if (task.taskType === 'email_automation') {
-            activityTitle = 'Scheduled: Email Drafts';
-            activityDescription = `AI-drafted email for ${task.originalFileName}`;
-            const emailData = await aiService.generateEmail(extractedText, task.originalFileName);
+        } else if (task.taskType === 'quiz') {
+            activityTitle = 'Scheduled: Generated Quiz';
+            activityDescription = `AI-generated quiz from ${task.originalFileName}`;
+            const quizData = await aiService.generateQuiz(extractedText, task.questionCount);
             generatedContent = {
-                type: 'email',
-                data: emailData
+                type: 'quiz',
+                data: quizData
             };
         }
 
@@ -67,12 +67,16 @@ const executeTask = async (task) => {
                 html += '<p>The following questions were generated:</p><ul>';
                 content.data.forEach(q => html += `<li style="margin-bottom: 10px;">${q}</li>`);
                 html += '</ul>';
-            } else if (content.type === 'email' && content.data) {
-                html += `<p>A draft has been prepared:</p>`;
-                html += `<div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">`;
-                html += `<p><strong>Subject:</strong> ${content.data.subject}</p>`;
-                html += `<p>${content.data.body?.replace(/\n/g, '<br>')}</p>`;
-                html += `</div>`;
+            } else if (content.type === 'quiz' && Array.isArray(content.data)) {
+                html += '<p>The following quiz was generated:</p>';
+                content.data.forEach((item, index) => {
+                    html += `<div style="margin-bottom: 20px; padding: 10px; background: #f3f4f6; border-radius: 8px;">`;
+                    html += `<p><strong>Q${index + 1}: ${item.question}</strong></p><ul>`;
+                    item.options.forEach(opt => {
+                        html += `<li>${opt} ${opt === item.answer ? '(Correct)' : ''}</li>`;
+                    });
+                    html += `</ul></div>`;
+                });
             }
 
             html += `<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;

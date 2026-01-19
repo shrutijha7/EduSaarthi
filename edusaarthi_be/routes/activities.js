@@ -27,26 +27,45 @@ const upload = multer({ storage: storage });
 // Generate task from file
 router.post('/generate', protect, upload.single('file'), async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ status: 'fail', message: 'No file uploaded' });
+        const { taskType, questionCount, subjectId, existingFilePath, existingFileName } = req.body;
+
+        // Check if we have either a new upload or an existing file reference
+        if (!req.file && !existingFilePath) {
+            return res.status(400).json({ status: 'fail', message: 'No file provided' });
         }
 
-        const { taskType, questionCount } = req.body;
         const aiService = require('../services/aiService'); // Import here or at top
 
-        // 1. Extract Text
-        // Ensure we handle different file types, but focusing on PDF for now as per ai.js legacy
-        let extractedText = "";
-        if (req.file.mimetype === 'application/pdf') {
-            extractedText = await aiService.extractTextFromPDF(req.file.buffer || fs.readFileSync(req.file.path));
+        let filePath, originalName;
+
+        // Determine file source
+        if (req.file) {
+            // Newly uploaded file
+            filePath = req.file.path;
+            originalName = req.file.originalname;
         } else {
-            // Fallback for text files or treat as basic text
-            extractedText = "File content extraction skipped (supports PDF). using metadata only.";
-            // In a real app we'd read .txt or .docx here too.
-            // Forcing simple text read for .txt
-            if (req.file.mimetype === 'text/plain') {
-                extractedText = fs.readFileSync(req.file.path, 'utf8');
+            // Existing file from subject
+            filePath = existingFilePath;
+            originalName = existingFileName;
+
+            // Verify the file exists
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json({ status: 'fail', message: 'Referenced file not found' });
             }
+        }
+
+        // 1. Extract Text
+        let extractedText = "";
+        const fileBuffer = fs.readFileSync(filePath);
+        const mimeType = path.extname(filePath).toLowerCase();
+
+        if (mimeType === '.pdf') {
+            extractedText = await aiService.extractTextFromPDF(fileBuffer);
+        } else if (mimeType === '.txt') {
+            extractedText = fs.readFileSync(filePath, 'utf8');
+        } else {
+            // Fallback for other file types
+            extractedText = "File content extraction skipped (supports PDF and TXT). Using metadata only.";
         }
 
         let activityTitle = '';
@@ -55,47 +74,53 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
 
         if (taskType === 'question_generation') {
             activityTitle = 'Generated Questions';
-            activityDescription = `AI-generated questions from ${req.file.originalname}`;
+            activityDescription = `AI-generated questions from ${originalName}`;
             const questions = await aiService.generateQuestions(extractedText, parseInt(questionCount) || 5);
             generatedContent = {
                 type: 'questions',
                 data: questions
             };
-        } else if (taskType === 'email_automation') {
-            activityTitle = 'Email Drafts';
-            activityDescription = `AI-drafted email for ${req.file.originalname}`;
-            const emailData = await aiService.generateEmail(extractedText, req.file.originalname);
+        } else if (taskType === 'quiz') {
+            activityTitle = 'Generated Quiz';
+            activityDescription = `AI-generated quiz from ${originalName}`;
+            const quizData = await aiService.generateQuiz(extractedText, parseInt(questionCount) || 5);
             generatedContent = {
-                type: 'email',
-                data: emailData
+                type: 'quiz',
+                data: quizData
             };
         } else {
             activityTitle = 'File Processed';
-            activityDescription = `Processed ${req.file.originalname}`;
+            activityDescription = `Processed ${originalName}`;
         }
 
         const newActivity = await Activity.create({
             userId: req.user._id,
+            subjectId: subjectId || null, // Link to subject if provided
             title: activityTitle,
             description: activityDescription,
+            fileName: originalName, // Store original file name
+            filePath: filePath, // Store file path
             type: taskType || 'automation'
         });
 
         // 6. Send Email Notification if enabled
         if (req.user.notificationsEnabled !== false) {
-            const emailHtml = formatEmailBody(activityTitle, generatedContent || { type: 'status', data: activityDescription }, req.file.originalname);
+            const emailHtml = formatEmailBody(activityTitle, generatedContent || { type: 'status', data: activityDescription }, originalName);
             await sendEmail(req.user.email, `Automation Complete: ${activityTitle}`, emailHtml);
         }
 
-        // Cleanup uploaded file if using diskStorage temporary
-        // fs.unlinkSync(req.file.path);
+        // Cleanup uploaded file if it was a new upload (not from subject)
+        // Only delete if it's in the temporary uploads directory, not the subjects directory
+        if (req.file && filePath.includes('uploads/') && !filePath.includes('uploads/subjects')) {
+            // fs.unlinkSync(filePath); // Uncomment if you want to delete temporary uploads
+        }
 
         res.status(200).json({
             status: 'success',
             message: 'File processed successfully',
             data: {
                 activity: newActivity,
-                file: req.file.filename,
+                file: path.basename(filePath),
                 generatedContent
             }
         });
@@ -108,21 +133,38 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
 // Schedule a task
 router.post('/schedule', protect, upload.single('file'), async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ status: 'fail', message: 'No file uploaded' });
-        }
-
-        const { taskType, questionCount, recipientEmails, scheduledDate } = req.body;
+        const { taskType, questionCount, recipientEmails, scheduledDate, existingFilePath, existingFileName, subjectId } = req.body;
         const ScheduledTask = require('../models/ScheduledTask');
 
         if (!scheduledDate) {
             return res.status(400).json({ status: 'fail', message: 'Scheduled date is required' });
         }
 
+        // Check if we have either a new upload or an existing file reference
+        if (!req.file && !existingFilePath) {
+            return res.status(400).json({ status: 'fail', message: 'No file provided' });
+        }
+
+        let filePath, originalName;
+
+        // Determine file source
+        if (req.file) {
+            filePath = req.file.path;
+            originalName = req.file.originalname;
+        } else {
+            filePath = existingFilePath;
+            originalName = existingFileName;
+
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).json({ status: 'fail', message: 'Referenced file not found' });
+            }
+        }
+
         const newTask = await ScheduledTask.create({
             userId: req.user._id,
-            filePath: req.file.path,
-            originalFileName: req.file.originalname,
+            subjectId: subjectId || null,
+            filePath: filePath,
+            originalFileName: originalName,
             taskType: taskType || 'automation',
             questionCount: parseInt(questionCount) || 5,
             recipientEmails: recipientEmails || req.user.email,
@@ -167,12 +209,19 @@ const formatEmailBody = (title, content, fileName) => {
         html += '<p>The following questions were generated:</p><ul>';
         content.data.forEach(q => html += `<li style="margin-bottom: 10px;">${q}</li>`);
         html += '</ul>';
-    } else if (content.type === 'email' && content.data) {
-        html += `<p>A draft has been prepared:</p>`;
-        html += `<div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">`;
-        html += `<p><strong>Subject:</strong> ${content.data.subject}</p>`;
-        html += `<p>${content.data.body?.replace(/\n/g, '<br>')}</p>`;
-        html += `</div>`;
+    } else if (content.type === 'quiz' && Array.isArray(content.data)) {
+        html += '<p>The following quiz was generated:</p>';
+        content.data.forEach((item, index) => {
+            html += `<div style="margin-bottom: 20px; padding: 10px; background: #f3f4f6; border-radius: 8px;">`;
+            html += `<p><strong>Q${index + 1}: ${item.question}</strong></p>`;
+            html += `<ul style="list-style-type: none; padding-left: 0;">`;
+            item.options.forEach(opt => {
+                html += `<li style="margin-bottom: 5px; padding: 5px; border: 1px solid #ddd; ${opt === item.answer ? 'background: #d1fae5; font-bold: true;' : ''}">${opt}</li>`;
+            });
+            html += `</ul>`;
+            html += `<p style="font-size: 0.8rem; color: #059669;">Correct Answer: ${item.answer}</p>`;
+            html += `</div>`;
+        });
     } else if (content.type === 'status') {
         html += `<p>${content.data}</p>`;
     } else {
@@ -236,9 +285,14 @@ router.post('/send-manual', protect, async (req, res) => {
                 html += '<ul>';
                 content.data.forEach(q => html += `<li>${q}</li>`);
                 html += '</ul>';
-            } else if (content.type === 'email') {
-                html += `<h3>Subject: ${content.data.subject}</h3>`;
-                html += `<div>${content.data.body.replace(/\n/g, '<br>')}</div>`;
+            } else if (content.type === 'quiz') {
+                content.data.forEach((item, index) => {
+                    html += `<p><strong>Q${index + 1}: ${item.question}</strong></p><ul>`;
+                    item.options.forEach(opt => {
+                        html += `<li>${opt} ${opt === item.answer ? '(Correct)' : ''}</li>`;
+                    });
+                    html += `</ul>`;
+                });
             }
             html += '<br><p>Sent via Edusaarthi Assignment Automation</p>';
             return html;

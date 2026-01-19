@@ -1,30 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Users, Save, Trash2 } from 'lucide-react';
+import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Save, Eye } from 'lucide-react';
 
-import api from '../utils/api';
+import api, { API_BASE_URL } from '../utils/api';
 
 const AssignmentWorkspace = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [status, setStatus] = useState('idle'); // idle, processing, completed
     const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedExistingFile, setSelectedExistingFile] = useState(null); // For selecting from subject files
     const [taskType, setTaskType] = useState('question_generation');
-    const [recipientEmail, setRecipientEmail] = useState('');
-    const [selectedRecipientGroup, setSelectedRecipientGroup] = useState(null);
     const [generatedContent, setGeneratedContent] = useState(null);
     const [assignment, setAssignment] = useState(null);
     const [loadingAssignment, setLoadingAssignment] = useState(true);
-    const [recipientGroups, setRecipientGroups] = useState([]);
-    const [newGroupName, setNewGroupName] = useState('');
-    const [showSaveGroup, setShowSaveGroup] = useState(false);
-    const [sendingEmail, setSendingEmail] = useState(false);
-    const [sendSuccess, setSendSuccess] = useState(false);
     const [questionCount, setQuestionCount] = useState(5);
-    const [scheduledDate, setScheduledDate] = useState('');
-    const [isScheduling, setIsScheduling] = useState(false);
+    const [subjectFiles, setSubjectFiles] = useState([]); // Files already uploaded to this subject
+    const [savingFile, setSavingFile] = useState(false);
     const fileInputRef = useRef(null);
+
+    // Detect if we're using subjects or courses based on URL
+    const isSubjectMode = location.pathname.startsWith('/subjects');
+    const apiEndpoint = isSubjectMode ? 'subjects' : 'courses';
+    const itemKey = isSubjectMode ? 'subject' : 'course';
 
     useEffect(() => {
         const fetchAssignment = async () => {
@@ -34,81 +34,79 @@ const AssignmentWorkspace = () => {
                     navigate('/login');
                     return;
                 }
-                const response = await api.get(`/api/courses/${id}`);
-                setAssignment(response.data.data.course);
+                const response = await api.get(`/api/${apiEndpoint}/${id}`);
+                const fetchedItem = response.data.data[itemKey];
+                setAssignment(fetchedItem);
+
+                // Extract files if this is a subject
+                if (isSubjectMode && fetchedItem.files && fetchedItem.files.length > 0) {
+                    setSubjectFiles(fetchedItem.files);
+                    // Auto-select the first file if available
+                    setSelectedExistingFile(fetchedItem.files[0]);
+                }
             } catch (error) {
-                console.error('Error fetching assignment details:', error);
+                console.error('Error fetching details:', error);
             } finally {
                 setLoadingAssignment(false);
             }
         };
 
-        const fetchGroups = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await api.get(`/api/recipient-groups`);
-                setRecipientGroups(response.data.data.groups);
-            } catch (error) {
-                console.error('Error fetching recipient groups:', error);
-            }
-        };
-
         if (id) {
             fetchAssignment();
-            fetchGroups();
         }
-    }, [id, navigate]);
+    }, [id, apiEndpoint, itemKey, isSubjectMode, navigate]);
 
-    const handleSaveGroup = async () => {
-        if (!newGroupName || !recipientEmail) {
-            alert('Please provide a group name and at least one email.');
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await api.post(`/api/recipient-groups`,
-                { name: newGroupName, emails: recipientEmail }
-            );
-
-            setRecipientGroups([...recipientGroups, response.data.data.group]);
-            setNewGroupName('');
-            setShowSaveGroup(false);
-            alert('Group saved successfully!');
-        } catch (error) {
-            alert(error.response?.data?.message || 'Failed to save group');
-        }
-    };
-
-    const handleDeleteGroup = async (groupId) => {
-        if (!window.confirm('Are you sure you want to delete this group?')) return;
-
-        try {
-            const token = localStorage.getItem('token');
-            await api.delete(`/api/recipient-groups/${groupId}`);
-            setRecipientGroups(recipientGroups.filter(g => g._id !== groupId));
-        } catch (error) {
-            alert('Failed to delete group');
-        }
-    };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setSelectedFile(file);
+            setSelectedExistingFile(null); // Clear existing file selection
             console.log('File selected:', file.name);
         }
     };
 
+    const handleSaveFile = async () => {
+        if (!selectedFile) return;
+        setSavingFile(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const response = await api.post(`/api/subjects/${id}/files`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            // Update local state with the new list of files from backend
+            const updatedSubject = response.data.data.subject;
+            setSubjectFiles(updatedSubject.files);
+            setAssignment(updatedSubject);
+
+            // Switch selection to the newly saved file
+            const newFile = updatedSubject.files[updatedSubject.files.length - 1];
+            setSelectedExistingFile(newFile);
+            setSelectedFile(null);
+
+            alert('File saved to subject successfully!');
+        } catch (error) {
+            console.error('Error saving file:', error);
+            alert('Failed to save file: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setSavingFile(false);
+        }
+    };
+
     const automationSteps = [
-        { title: 'Document Analysis', description: 'Extracting key requirements and structure.', icon: FileUp },
-        { title: 'Data Synthesis', description: 'Generating content using custom AI models.', icon: Sparkles },
-        { title: 'Technical Verification', description: 'Cross-referencing with project guidelines.', icon: ShieldCheck },
-        { title: 'Final Polish', description: 'Formatting and citation management.', icon: Zap },
+        { title: 'Topical Analysis', description: 'Deep-scanning document to identify core educational themes.', icon: FileUp },
+        { title: 'Concept Mapping', description: 'Cross-referencing topics with academic knowledge bases.', icon: Sparkles },
+        { title: 'Question Synthesis', description: 'Formulating conceptual questions to test deep understanding.', icon: ShieldCheck },
+        { title: 'Review & Refine', description: 'Finalizing structure and ensuring clarity of options.', icon: Zap },
     ];
 
     const handleRunAutomation = async () => {
-        if (!selectedFile) {
+        // Check if either a new file or an existing file is selected
+        if (!selectedFile && !selectedExistingFile) {
             alert('Please select a file first.');
             return;
         }
@@ -117,10 +115,19 @@ const AssignmentWorkspace = () => {
 
         try {
             const formData = new FormData();
-            formData.append('file', selectedFile);
+
+            // If a new file was uploaded, use it; otherwise use the existing file info
+            if (selectedFile) {
+                formData.append('file', selectedFile);
+            } else if (selectedExistingFile) {
+                // For existing files, send the file path so backend can read it
+                formData.append('existingFilePath', selectedExistingFile.path);
+                formData.append('existingFileName', selectedExistingFile.originalName);
+            }
+
             formData.append('taskType', taskType);
             formData.append('questionCount', questionCount);
-
+            formData.append('subjectId', id); // Pass subject/course ID
 
             const token = localStorage.getItem('token');
 
@@ -140,62 +147,7 @@ const AssignmentWorkspace = () => {
         }
     };
 
-    const handleScheduleAutomation = async () => {
-        if (!selectedFile) {
-            alert('Please select a file first.');
-            return;
-        }
-        if (!scheduledDate) {
-            alert('Please select a date and time for scheduling.');
-            return;
-        }
 
-        setIsScheduling(true);
-
-        try {
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('taskType', taskType);
-            formData.append('questionCount', questionCount);
-            formData.append('scheduledDate', scheduledDate);
-            formData.append('recipientEmails', recipientEmail);
-
-            const token = localStorage.getItem('token');
-            await api.post('/api/activities/schedule', formData);
-
-            alert('Task scheduled successfully! It will run at the specified time.');
-            setScheduledDate('');
-        } catch (error) {
-            console.error('Error scheduling automation:', error);
-            alert(error.response?.data?.message || 'Failed to schedule automation.');
-        } finally {
-            setIsScheduling(false);
-        }
-    };
-
-    const handleSendManual = async (target) => {
-        if (!generatedContent) return;
-        setSendingEmail(true);
-        setSendSuccess(false);
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await api.post('/api/activities/send-manual', {
-                recipientEmail: target || recipientEmail,
-                title: assignment?.title || 'Generated Task',
-                content: generatedContent,
-                fileName: selectedFile?.name || 'document'
-            });
-
-            setSendSuccess(true);
-            setTimeout(() => setSendSuccess(false), 3000);
-            // alert(response.data.message); // Optional: keep or remove alert
-        } catch (error) {
-            alert('Failed to send email: ' + (error.response?.data?.message || error.message));
-        } finally {
-            setSendingEmail(false);
-        }
-    };
 
     const [isDragging, setIsDragging] = useState(false);
 
@@ -231,7 +183,7 @@ const AssignmentWorkspace = () => {
                 {/* ... Header section ... */}
                 <div style={{ marginBottom: '2rem' }}>
                     <button
-                        onClick={() => navigate('/courses')}
+                        onClick={() => navigate(isSubjectMode ? '/subjects' : '/courses')}
                         className="animate-slide-up"
                         style={{
                             background: 'none',
@@ -248,7 +200,7 @@ const AssignmentWorkspace = () => {
                         onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-main)'}
                         onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
                     >
-                        <ChevronLeft size={20} /> Back to Assignments
+                        <ChevronLeft size={20} /> Back to {isSubjectMode ? 'Subjects' : 'Assignments'}
                     </button>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }} className="animate-slide-up delay-100">
                         <div>
@@ -267,8 +219,8 @@ const AssignmentWorkspace = () => {
                                     // Generate formatted report
                                     let reportText = `EduSaarthi Automation Report\n==========================\n\n`;
                                     reportText += `Date: ${new Date().toLocaleString()}\n`;
-                                    reportText += `File: ${selectedFile?.name || 'Unknown'}\n`;
-                                    reportText += `Task: ${taskType === 'question_generation' ? 'Question Generation' : 'Email Automation'}\n\n`;
+                                    reportText += `File: ${selectedFile?.name || selectedExistingFile?.originalName || 'Unknown'}\n`;
+                                    reportText += `Task: ${taskType === 'question_generation' ? 'Question Generation' : 'Quiz'}\n\n`;
 
                                     reportText += `RESULTS\n-------\n\n`;
 
@@ -276,9 +228,14 @@ const AssignmentWorkspace = () => {
                                         generatedContent.data.forEach(q => {
                                             reportText += `${q}\n`;
                                         });
-                                    } else if (generatedContent.type === 'email' && generatedContent.data) {
-                                        reportText += `Subject: ${generatedContent.data.subject}\n\n`;
-                                        reportText += `${generatedContent.data.body}\n`;
+                                    } else if (generatedContent.type === 'quiz' && Array.isArray(generatedContent.data)) {
+                                        generatedContent.data.forEach((item, index) => {
+                                            reportText += `Q${index + 1}: ${item.question}\n`;
+                                            item.options.forEach((opt, i) => {
+                                                reportText += `   ${String.fromCharCode(65 + i)}) ${opt}\n`;
+                                            });
+                                            reportText += `   Correct Answer: ${item.answer}\n\n`;
+                                        });
                                     } else {
                                         reportText += JSON.stringify(generatedContent.data, null, 2);
                                     }
@@ -301,6 +258,90 @@ const AssignmentWorkspace = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '2.5rem' }}>
                     <div className="glass-card" style={{ padding: '2.5rem', maxWidth: 'none' }}>
+                        {/* Show existing subject files if available */}
+                        {isSubjectMode && subjectFiles.length > 0 && (
+                            <div style={{ marginBottom: '2.5rem', marginTop: '2rem' }}>
+                                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <FileUp size={20} color="var(--primary)" />
+                                    Uploaded Files for this Subject
+                                </h3>
+                                <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                                    Select a file to process, or upload a new one below.
+                                </p>
+                                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                    {subjectFiles.map((file, index) => (
+                                        <div
+                                            key={file._id || index}
+                                            onClick={() => {
+                                                setSelectedExistingFile(file);
+                                                setSelectedFile(null); // Clear any newly uploaded file
+                                            }}
+                                            style={{
+                                                padding: '1rem 1.25rem',
+                                                background: selectedExistingFile?._id === file._id ? 'rgba(var(--primary-rgb), 0.15)' : 'rgba(0,0,0,0.2)',
+                                                border: selectedExistingFile?._id === file._id ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
+                                                borderRadius: '12px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '1rem'
+                                            }}
+                                            onMouseOver={(e) => {
+                                                if (selectedExistingFile?._id !== file._id) {
+                                                    e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.08)';
+                                                }
+                                            }}
+                                            onMouseOut={(e) => {
+                                                if (selectedExistingFile?._id !== file._id) {
+                                                    e.currentTarget.style.background = 'rgba(0,0,0,0.2)';
+                                                }
+                                            }}
+                                        >
+                                            <input
+                                                type="radio"
+                                                checked={selectedExistingFile?._id === file._id}
+                                                onChange={() => { }}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '0.25rem' }}>
+                                                    {file.originalName}
+                                                </div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                                    Uploaded {new Date(file.uploadDate).toLocaleDateString()} · {(file.size / 1024).toFixed(2)} KB
+                                                </div>
+                                            </div>
+                                            {/* Open/View Link */}
+                                            <a
+                                                href={`${API_BASE_URL}/${file.path.replace(/\\/g, '/')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                style={{
+                                                    color: 'var(--primary)',
+                                                    padding: '0.5rem',
+                                                    borderRadius: '8px',
+                                                    background: 'rgba(var(--primary-rgb), 0.1)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.2)'}
+                                                onMouseOut={(e) => e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.1)'}
+                                                title="View/Open File"
+                                            >
+                                                <Eye size={18} />
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+
+
+                            </div>
+                        )}
+
                         <div
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
@@ -309,12 +350,12 @@ const AssignmentWorkspace = () => {
                             style={{
                                 border: `2px dashed ${isDragging ? 'var(--primary)' : 'var(--glass-border)'}`,
                                 borderRadius: '24px',
-                                padding: '4rem 2rem',
+                                padding: subjectFiles.length > 0 ? '2rem' : '4rem 2rem',
                                 textAlign: 'center',
                                 background: isDragging ? 'rgba(196, 164, 132, 0.1)' : 'rgba(255,255,255,0.02)',
                                 marginBottom: '2.5rem',
                                 cursor: 'pointer',
-                                marginTop: '2rem',
+                                marginTop: subjectFiles.length > 0 ? '0' : '2rem',
                                 transition: 'all 0.2s ease'
                             }}
                         >
@@ -332,7 +373,7 @@ const AssignmentWorkspace = () => {
                                 <FileUp size={32} color="white" />
                             </div>
                             <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                                {selectedFile ? 'File Selected' : 'Drop assignment brief here'}
+                                {selectedFile ? 'New File Selected' : (subjectFiles.length > 0 ? 'Upload a new file' : 'Drop assignment brief here')}
                             </h3>
                             <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                                 {selectedFile ? selectedFile.name : 'Support PDF, DOCX, or Image formats'}
@@ -353,53 +394,39 @@ const AssignmentWorkspace = () => {
                             >
                                 {selectedFile ? 'Change File' : 'Browse Files'}
                             </button>
-                        </div>
 
-                        {/* Recipient Group Selection - FIRST STEP */}
-                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', border: selectedRecipientGroup ? '2px solid var(--primary)' : '2px solid transparent' }}>
-                            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Users size={18} color="var(--primary)" /> Step 1: Select Student Batch
-                            </h4>
-                            <select
-                                value={selectedRecipientGroup?._id || ''}
-                                onChange={(e) => {
-                                    const group = recipientGroups.find(g => g._id === e.target.value);
-                                    setSelectedRecipientGroup(group);
-                                    if (group) {
-                                        setRecipientEmail(group.emails.join(', '));
-                                    }
-                                }}
-                                style={{
-                                    width: '100%',
-                                    background: 'rgba(0,0,0,0.2)',
-                                    border: '1px solid var(--glass-border)',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    padding: '1rem',
-                                    outline: 'none',
-                                    fontSize: '0.875rem',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <option value="" style={{ color: 'black' }}>Select a student batch...</option>
-                                {recipientGroups.map(group => (
-                                    <option key={group._id} value={group._id} style={{ color: 'black' }}>
-                                        {group.name} ({group.emails.length} students)
-                                    </option>
-                                ))}
-                            </select>
-                            {selectedRecipientGroup && (
-                                <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '8px', fontSize: '0.8rem' }}>
-                                    <strong>Selected:</strong> {selectedRecipientGroup.name} - {selectedRecipientGroup.emails.join(', ')}
-                                </div>
+                            {selectedFile && (
+                                <button
+                                    className="btn-primary"
+                                    style={{
+                                        width: 'auto',
+                                        padding: '0.6rem 1.5rem',
+                                        fontSize: '0.875rem',
+                                        marginLeft: '1rem',
+                                        background: '#10b981',
+                                        borderColor: '#10b981'
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSaveFile();
+                                    }}
+                                    disabled={savingFile}
+                                >
+                                    {savingFile ? 'Saving...' : (
+                                        <>
+                                            <Save size={16} style={{ marginRight: '0.5rem' }} /> Save to Subject
+                                        </>
+                                    )}
+                                </button>
                             )}
                         </div>
+
 
                         <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
                             <div style={{ display: 'flex', gap: '1.5rem' }}>
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Sparkles size={18} color="var(--primary)" /> Step 2: Select Task
+                                        <Sparkles size={18} color="var(--primary)" /> Select Task
                                     </h4>
                                     <select
                                         value={taskType}
@@ -417,10 +444,10 @@ const AssignmentWorkspace = () => {
                                         }}
                                     >
                                         <option value="question_generation" style={{ color: 'black' }}>Question Generation</option>
-                                        <option value="email_automation" style={{ color: 'black' }}>Email Automation</option>
+                                        <option value="quiz" style={{ color: 'black' }}>Quiz</option>
                                     </select>
                                 </div>
-                                {taskType === 'question_generation' && (
+                                {(taskType === 'question_generation' || taskType === 'quiz') && (
                                     <div style={{ width: '150px' }}>
                                         <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             Count
@@ -447,41 +474,7 @@ const AssignmentWorkspace = () => {
                             </div>
                         </div>
 
-                        <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
-                            <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Sparkles size={18} color="var(--primary)" /> Schedule (Optional)
-                            </h4>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <input
-                                    type="datetime-local"
-                                    value={scheduledDate}
-                                    onChange={(e) => setScheduledDate(e.target.value)}
-                                    style={{
-                                        flex: 1,
-                                        background: 'rgba(0,0,0,0.2)',
-                                        border: '1px solid var(--glass-border)',
-                                        borderRadius: '12px',
-                                        color: 'white',
-                                        padding: '1rem',
-                                        outline: 'none',
-                                        fontSize: '0.875rem'
-                                    }}
-                                />
-                                {scheduledDate && (
-                                    <button
-                                        className="btn-primary"
-                                        style={{ width: 'auto', background: 'var(--primary)', borderColor: 'var(--primary)' }}
-                                        onClick={handleScheduleAutomation}
-                                        disabled={isScheduling}
-                                    >
-                                        {isScheduling ? 'Scheduling...' : 'Schedule for Later'}
-                                    </button>
-                                )}
-                            </div>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                Leave empty to execute immediately.
-                            </p>
-                        </div>
+
 
                         <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px' }}>
                             <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -510,17 +503,17 @@ const AssignmentWorkspace = () => {
                                 marginTop: '2.5rem',
                                 height: '60px',
                                 fontSize: '1.1rem',
-                                opacity: !selectedRecipientGroup ? 0.5 : 1,
-                                cursor: !selectedRecipientGroup ? 'not-allowed' : 'pointer'
+                                opacity: (!selectedFile && !selectedExistingFile) ? 0.5 : 1,
+                                cursor: (!selectedFile && !selectedExistingFile) ? 'not-allowed' : 'pointer'
                             }}
                             onClick={() => {
-                                if (!selectedRecipientGroup) {
-                                    alert('Please select a student batch first (Step 1)');
+                                if (!selectedFile && !selectedExistingFile) {
+                                    alert('Please upload or select a file first.');
                                     return;
                                 }
                                 handleRunAutomation();
                             }}
-                            disabled={status === 'processing' || !selectedRecipientGroup}
+                            disabled={status === 'processing' || (!selectedFile && !selectedExistingFile)}
                         >
                             {status === 'processing' ? 'Processing Automation...' : 'Execute Full Automation'}
                             <ArrowRight size={20} />
@@ -542,68 +535,38 @@ const AssignmentWorkspace = () => {
                                     </div>
                                 )}
 
-                                {generatedContent.type === 'email' && (
+                                {generatedContent.type === 'quiz' && (
                                     <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
-                                        <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Email Draft</h3>
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <strong>Subject:</strong> {generatedContent.data.subject}
-                                        </div>
-                                        <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-muted)' }}>
-                                            {generatedContent.data.body}
+                                        <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Generated Quiz</h3>
+                                        <div style={{ display: 'grid', gap: '2rem' }}>
+                                            {generatedContent.data.map((item, idx) => (
+                                                <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                                    <div style={{ fontWeight: '600', marginBottom: '1rem', fontSize: '1.1rem' }}>
+                                                        {idx + 1}. {item.question}
+                                                    </div>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                                        {item.options.map((opt, optIdx) => (
+                                                            <div
+                                                                key={optIdx}
+                                                                style={{
+                                                                    padding: '0.75rem 1rem',
+                                                                    background: 'rgba(0,0,0,0.2)',
+                                                                    border: '1px solid var(--glass-border)',
+                                                                    borderRadius: '8px',
+                                                                    fontSize: '0.9rem',
+                                                                    color: 'var(--text-main)'
+                                                                }}
+                                                            >
+                                                                {String.fromCharCode(65 + optIdx)}. {opt}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
 
-                                <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(var(--primary-rgb), 0.08)', borderRadius: '16px', border: '1px solid rgba(var(--primary-rgb), 0.15)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                        <h4 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                                            <Users size={18} color="var(--primary)" /> Send to Selected Batch
-                                        </h4>
-                                    </div>
-
-                                    {selectedRecipientGroup && (
-                                        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(var(--primary-rgb), 0.15)', borderRadius: '12px' }}>
-                                            <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                                                <strong>Batch:</strong> {selectedRecipientGroup.name}
-                                            </div>
-                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                <strong>Recipients ({selectedRecipientGroup.emails.length}):</strong> {selectedRecipientGroup.emails.join(', ')}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                                        <input
-                                            type="text"
-                                            value={recipientEmail}
-                                            readOnly
-                                            style={{
-                                                flex: 1,
-                                                background: 'rgba(0,0,0,0.3)',
-                                                border: '1px solid var(--glass-border)',
-                                                borderRadius: '12px',
-                                                color: 'var(--text-muted)',
-                                                padding: '0.8rem',
-                                                outline: 'none',
-                                                fontSize: '0.875rem',
-                                                cursor: 'not-allowed'
-                                            }}
-                                        />
-                                        <button
-                                            className="btn-primary"
-                                            style={{
-                                                width: 'auto',
-                                                padding: '0 1.5rem',
-                                                background: sendSuccess ? '#10b981' : (sendingEmail ? 'rgba(var(--primary-rgb), 0.6)' : ''),
-                                                borderColor: sendSuccess ? '#10b981' : ''
-                                            }}
-                                            onClick={() => handleSendManual()}
-                                            disabled={sendingEmail}
-                                        >
-                                            {sendingEmail ? 'Sending...' : (sendSuccess ? 'Email Sent!' : 'Send Now')}
-                                        </button>
-                                    </div>
-                                </div>
 
                                 <button
                                     className="btn-primary"

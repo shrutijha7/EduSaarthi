@@ -1,10 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Assignments from './pages/Courses';
+import Subjects from './pages/Subjects';
 import Schedule from './pages/Schedule';
 import CourseDetail from './pages/CourseDetail';
 import Settings from './pages/Settings';
@@ -27,6 +27,11 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return children;
+};
+
+const CourseRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/subjects/${id}`} replace />;
 };
 
 const App = () => {
@@ -54,15 +59,16 @@ const App = () => {
             }
           />
           <Route
-            path="/courses"
+            path="/subjects"
             element={
               <ProtectedRoute>
-                <Assignments />
+                <Subjects />
               </ProtectedRoute>
             }
           />
+          <Route path="/courses" element={<Navigate to="/subjects" />} />
           <Route
-            path="/schedule"
+            path="/history"
             element={
               <ProtectedRoute>
                 <Schedule />
@@ -71,6 +77,10 @@ const App = () => {
           />
           <Route
             path="/courses/:id"
+            element={<CourseRedirect />}
+          />
+          <Route
+            path="/subjects/:id"
             element={
               <ProtectedRoute>
                 <CourseDetail />

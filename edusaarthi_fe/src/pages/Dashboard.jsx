@@ -69,7 +69,7 @@ const Dashboard = () => {
                     <button
                         className="btn-primary"
                         style={{ width: 'auto', padding: '0.75rem 1.5rem' }}
-                        onClick={() => navigate('/courses')}
+                        onClick={() => navigate('/subjects')}
                     >
                         New Automation <ChevronRight size={18} />
                     </button>
@@ -110,7 +110,7 @@ const Dashboard = () => {
                                 onClick={() => {
                                     setSelectedActivity(i);
                                     // Navigate to courses/assignments for now as a default action
-                                    navigate('/courses');
+                                    navigate('/subjects');
                                 }}
                                 style={{
                                     padding: '1.5rem 2rem',

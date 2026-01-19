@@ -81,26 +81,20 @@ const Layout = ({ children }) => {
                         <span>Overview</span>
                     </NavLink>
                     <NavLink
-                        to="/courses"
+                        to="/subjects"
                         className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
                     >
                         <BookOpen size={20} />
-                        <span>My Assignments</span>
+                        <span>My Subjects</span>
                     </NavLink>
                     <NavLink
-                        to="/schedule"
+                        to="/history"
                         className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
                     >
                         <Clock size={20} />
-                        <span>Automation Queue</span>
+                        <span>History</span>
                     </NavLink>
-                    <NavLink
-                        to="/settings"
-                        className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-                    >
-                        <Settings size={20} />
-                        <span>Settings</span>
-                    </NavLink>
+
                 </nav>
 
                 <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.5rem', borderTop: '1px solid var(--glass-border)' }}>
@@ -123,6 +117,13 @@ const Layout = ({ children }) => {
                         />
                     </div>
                     <div className="top-nav-actions">
+                        <div
+                            className="icon-badge"
+                            title="Settings"
+                            onClick={() => navigate('/settings')}
+                        >
+                            <Settings size={20} />
+                        </div>
                         <div
                             className="icon-badge"
                             title="Notifications"

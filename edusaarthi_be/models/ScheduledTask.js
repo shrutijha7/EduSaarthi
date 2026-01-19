@@ -17,7 +17,7 @@ const scheduledTaskSchema = new mongoose.Schema({
     taskType: {
         type: String,
         required: true,
-        enum: ['question_generation', 'email_automation', 'automation']
+        enum: ['question_generation', 'quiz', 'automation']
     },
     questionCount: {
         type: Number,

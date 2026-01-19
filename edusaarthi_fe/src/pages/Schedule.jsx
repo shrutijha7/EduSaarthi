@@ -28,7 +28,7 @@ const Schedule = () => {
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching data:', error);
-                setError('Failed to load automation queue');
+                setError('Failed to load history');
                 setLoading(false);
             }
         };
@@ -127,7 +127,7 @@ const Schedule = () => {
             <DashboardLayout>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: '1rem' }}>
                     <Loader2 className="animate-spin" size={40} color="var(--primary)" />
-                    <p style={{ color: 'var(--text-muted)' }}>Retrieving automation queue...</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Retrieving history...</p>
                 </div>
             </DashboardLayout>
         );
@@ -136,8 +136,8 @@ const Schedule = () => {
     return (
         <DashboardLayout>
             <header style={{ marginBottom: '3rem' }}>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontWeight: '700' }}>Automation Queue</h1>
-                <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Monitor background tasks and execution history.</p>
+                <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontWeight: '700' }}>History</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Monitor background tasks and execution logs.</p>
             </header>
 
             <div style={{
@@ -190,6 +190,12 @@ const Schedule = () => {
                                         </div>
                                         <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem', fontWeight: '600' }}>{event.title}</h3>
                                         <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{event.description}</div>
+                                        {event.fileName && (
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--primary)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <FileText size={12} />
+                                                <span>File: {event.fileName}</span>
+                                            </div>
+                                        )}
                                     </div>
                                     {event.isScheduled ? (
                                         <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f59e0b', opacity: 0.5 }}></div>

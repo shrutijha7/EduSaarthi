@@ -331,11 +331,7 @@ const Assignments = () => {
                             </div>
 
                             <div style={{ padding: '1.5rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#fbbf24' }}>
-                                        <Star size={16} fill="#fbbf24" />
-                                        <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-main)' }}>Priority: {assignment.rating > 4 ? 'High' : 'Normal'}</span>
-                                    </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '1rem' }}>
                                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                                         <button
                                             onClick={(e) => handleEditClick(e, assignment)}
