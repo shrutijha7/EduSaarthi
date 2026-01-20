@@ -1,0 +1,55 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "Which architectural principle dictates that program instructions and data share a single common memory space accessed via the same bus structure?",
+      "options": [
+        "Harvard Architecture",
+        "Pipelined Architecture",
+        "Von-Neumann Architecture",
+        "RISC Architecture"
+      ],
+      "answer": "Von-Neumann Architecture"
+    },
+    {
+      "question": "In the context of data representation, which mechanism is essential for detecting and correcting single or multiple bit flips during data storage or transmission?",
+      "options": [
+        "Fixed-point representation",
+        "Floating-point normalization",
+        "Error detection and correction codes",
+        "Decimal arithmetic operations"
+      ],
+      "answer": "Error detection and correction codes"
+    },
+    {
+      "question": "What specialized hardware component is specifically designed to combine the execution of arithmetic, logic, and bit shift micro-operations?",
+      "options": [
+        "Control Memory",
+        "Instruction Register",
+        "Arithmetic logic shift unit",
+        "Memory Transfer Register"
+      ],
+      "answer": "Arithmetic logic shift unit"
+    },
+    {
+      "question": "What memory management technique uses secondary storage, often relying on paging, to give the operating system the appearance of a much larger main memory space?",
+      "options": [
+        "Cache Memory",
+        "Virtual memory",
+        "Read Only Memory (ROM)",
+        "Semiconductor Memories"
+      ],
+      "answer": "Virtual memory"
+    },
+    {
+      "question": "In a multiprocessor system utilizing multiple local caches, what term describes the problem of maintaining consistent data integrity across all copies of a shared memory block?",
+      "options": [
+        "Inter Processor Arbitration",
+        "Bus Structures",
+        "Interconnection structures",
+        "Cache Coherence"
+      ],
+      "answer": "Cache Coherence"
+    }
+  ]
+}

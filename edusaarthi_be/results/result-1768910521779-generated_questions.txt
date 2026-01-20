@@ -1,0 +1,11 @@
+Generated Questions
+===================
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 20/1/2026, 5:32:01 pm
+
+1. How does the fundamental constraint imposed by the Von-Neumann architecture, often referred to as the 'Von-Neumann Bottleneck,' necessitate the architectural shifts observed in modern multiprocessor and multicomputer systems concerning instruction execution and data parallelism?
+2. Analyze the inherent design trade-offs between Complex Instruction Set Computing (CISC) and Reduced Instruction Set Computing (RISC) philosophies concerning compiler design complexity, instruction pipeline optimization, and overall hardware utilization.
+3. Explain the architectural mechanism by which a micro-programmed control unit translates a high-level instruction opcode into the precise sequence of register transfer and arithmetic logic shift micro-operations required for execution. Discuss the primary advantages of this approach over a hardwired implementation.
+4. In a system utilizing both a deep memory hierarchy and virtual memory management, how do the concepts of Paging and Cache Coherence interact? Detail the specific challenges faced by system architects in maintaining data consistency across multiple processing elements accessing shared virtual address spaces.
+5. Contrast the efficiency and CPU overhead associated with programmed I/O versus Direct Memory Access (DMA) when managing high-throughput data transfers between peripheral devices and main memory. Under what specific performance criteria does the integration of a dedicated DMA controller become mandatory?

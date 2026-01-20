@@ -158,17 +158,16 @@ const ViewAssessment = () => {
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
                                             {item.options && item.options.map((opt, optIdx) => {
                                                 const letter = String.fromCharCode(65 + optIdx);
-                                                const isCorrect = item.answer && (item.answer.startsWith(letter) || item.answer === opt);
                                                 return (
                                                     <div
                                                         key={optIdx}
                                                         style={{
                                                             padding: '1rem 1.25rem',
-                                                            background: isCorrect ? 'rgba(16, 185, 129, 0.1)' : 'rgba(0,0,0,0.3)',
-                                                            border: isCorrect ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255,255,255,0.05)',
+                                                            background: 'rgba(0,0,0,0.3)',
+                                                            border: '1px solid rgba(255,255,255,0.05)',
                                                             borderRadius: '10px',
                                                             fontSize: '1rem',
-                                                            color: isCorrect ? '#34d399' : 'var(--text-main)',
+                                                            color: 'var(--text-main)',
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             gap: '0.75rem'
@@ -180,11 +179,6 @@ const ViewAssessment = () => {
                                                 );
                                             })}
                                         </div>
-                                        {item.answer && (
-                                            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', color: '#34d399', fontSize: '0.9rem', fontWeight: '500' }}>
-                                                Correct Answer: {item.answer}
-                                            </div>
-                                        )}
                                     </div>
                                 )) : <p>No quiz data found in this assessment.</p>}
                             </div>

@@ -1,0 +1,36 @@
+Generated Quiz
+==============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 20/1/2026, 5:33:24 pm
+
+Q1: Which hardware unit is specifically designed to integrate and execute arithmetic, logic, and shift micro-operations?
+   A) Address Sequencing Unit
+   B) Control Memory Register
+   C) Arithmetic Logic Shift Unit
+   D) Instruction Decoder Register
+
+Q2: Which input/output technique allows peripheral devices to transfer blocks of data directly to and from main memory without requiring the continuous involvement of the Central Processing Unit?
+   A) Programmed I/O
+   B) Interrupt Driven I/O
+   C) Memory Mapped I/O
+   D) Direct Memory Access (DMA)
+
+Q3: In the context of processor design, which attribute is characteristic of a Complex Instruction Set Computer (CISC) architecture when compared to a Reduced Instruction Set Computer (RISC) architecture?
+   A) A large number of general-purpose registers
+   B) Execution primarily driven by hardwired control logic
+   C) Simple, fixed-length instruction formats
+   D) Complex, variable-length instructions and numerous addressing modes
+
+Q4: What is the primary purpose of utilizing error detection and correction codes in computer systems?
+   A) To improve the speed of floating-point arithmetic operations
+   B) To ensure the integrity and reliability of data representation and transfer
+   C) To manage the translation between physical and virtual addresses
+   D) To optimize the structure of the instruction pipeline
+
+Q5: In a virtual memory system, what technique is used to divide the main memory and the virtual address space into equal, fixed-size blocks?
+   A) Segmentation
+   B) Paging
+   C) Cache Coherence
+   D) Swapping
+

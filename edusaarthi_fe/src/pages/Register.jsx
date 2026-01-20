@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, User, UserPlus, Loader2 } from 'lucide-react';
 
 const Register = () => {
+    const [name, setName] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,7 +18,7 @@ const Register = () => {
         setError('');
         setLoading(true);
 
-        const result = await register(username, email, password);
+        const result = await register(name, username, email, password);
         if (result.success) {
             navigate('/dashboard');
         } else {
@@ -38,14 +39,30 @@ const Register = () => {
 
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
-                        <label htmlFor="username">Full Name</label>
+                        <label htmlFor="name">Full Name</label>
+                        <div className="input-wrapper">
+                            <User />
+                            <input
+                                id="name"
+                                type="text"
+                                className="input-field"
+                                placeholder="John Doe"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="input-group">
+                        <label htmlFor="username">Username</label>
                         <div className="input-wrapper">
                             <User />
                             <input
                                 id="username"
                                 type="text"
                                 className="input-field"
-                                placeholder="John Doe"
+                                placeholder="johndoe123"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required

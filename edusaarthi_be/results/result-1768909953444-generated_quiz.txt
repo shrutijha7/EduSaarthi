@@ -1,0 +1,41 @@
+Generated Quiz
+==============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 20/1/2026, 5:22:33 pm
+
+Q1: Which architectural principle dictates that program instructions and data share a single common memory space accessed via the same bus structure?
+   A) Harvard Architecture
+   B) Pipelined Architecture
+   C) Von-Neumann Architecture
+   D) RISC Architecture
+   Answer: Von-Neumann Architecture
+
+Q2: In the context of data representation, which mechanism is essential for detecting and correcting single or multiple bit flips during data storage or transmission?
+   A) Fixed-point representation
+   B) Floating-point normalization
+   C) Error detection and correction codes
+   D) Decimal arithmetic operations
+   Answer: Error detection and correction codes
+
+Q3: What specialized hardware component is specifically designed to combine the execution of arithmetic, logic, and bit shift micro-operations?
+   A) Control Memory
+   B) Instruction Register
+   C) Arithmetic logic shift unit
+   D) Memory Transfer Register
+   Answer: Arithmetic logic shift unit
+
+Q4: What memory management technique uses secondary storage, often relying on paging, to give the operating system the appearance of a much larger main memory space?
+   A) Cache Memory
+   B) Virtual memory
+   C) Read Only Memory (ROM)
+   D) Semiconductor Memories
+   Answer: Virtual memory
+
+Q5: In a multiprocessor system utilizing multiple local caches, what term describes the problem of maintaining consistent data integrity across all copies of a shared memory block?
+   A) Inter Processor Arbitration
+   B) Bus Structures
+   C) Interconnection structures
+   D) Cache Coherence
+   Answer: Cache Coherence
+

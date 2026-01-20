@@ -10,32 +10,12 @@ const Dashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const [activities, setActivities] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchActivities = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await api.get('/api/activities');
-                setActivities(response.data.data.activities);
-            } catch (error) {
-                console.error('Error fetching activities:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchActivities();
-    }, []);
 
     const stats = [
         { title: 'Total Assignments', value: '12', icon: Layout, color: 'var(--primary)' },
         { title: 'Files Processed', value: '156', icon: User, color: '#10b981' },
         { title: 'Hours Saved', value: '42.5', icon: Bell, color: '#f59e0b' }
     ];
-
-    const [selectedActivity, setSelectedActivity] = useState(null);
 
     return (
         <DashboardLayout>
@@ -64,7 +44,7 @@ const Dashboard = () => {
                 <div style={{ position: 'relative', zIndex: 1, padding: '3rem', maxWidth: '600px' }}>
                     <h1 style={{ fontSize: '3rem', marginBottom: '1rem', lineHeight: '1.1' }}>Accelerate your workflow, {user?.username}!</h1>
                     <p style={{ color: 'var(--text-main)', fontSize: '1.2rem', opacity: '0.9', marginBottom: '1.5rem' }}>
-                        Your AI-powered assistant is ready. You have {activities.length > 0 ? 'new automation logs' : 'no pending tasks'} to review.
+                        Your AI-powered assistant is ready to help you manage your subjects and assessments.
                     </p>
                     <button
                         className="btn-primary"
@@ -89,58 +69,6 @@ const Dashboard = () => {
                     </div>
                 ))}
             </div>
-
-            <section style={{ marginTop: '4rem' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>Automation History</h2>
-                <div className="glass-card" style={{ padding: '0', maxWidth: 'none', overflow: 'hidden' }}>
-                    {loading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading logs...</div>
-                    ) : activities.filter(activity => {
-                        const q = searchParams.get('q')?.toLowerCase() || '';
-                        return activity.title.toLowerCase().includes(q) ||
-                            activity.description.toLowerCase().includes(q);
-                    }).length > 0 ? (
-                        activities.filter(activity => {
-                            const q = searchParams.get('q')?.toLowerCase() || '';
-                            return activity.title.toLowerCase().includes(q) ||
-                                activity.description.toLowerCase().includes(q);
-                        }).map((activity, i) => (
-                            <div
-                                key={i}
-                                onClick={() => {
-                                    setSelectedActivity(i);
-                                    if (['question_generation', 'quiz', 'automation'].includes(activity.type)) {
-                                        window.open(`/assessment/${activity._id}`, '_blank');
-                                    } else {
-                                        navigate('/subjects');
-                                    }
-                                }}
-                                style={{
-                                    padding: '1.5rem 2rem',
-                                    borderBottom: i === activities.length - 1 ? 'none' : '1px solid var(--glass-border)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '1.5rem',
-                                    cursor: 'pointer',
-                                    background: selectedActivity === i ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
-                                    transition: 'background 0.2s'
-                                }}
-                            >
-                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Layout size={20} style={{ color: selectedActivity === i ? 'var(--primary)' : 'var(--text-muted)' }} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <h4 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.25rem' }}>{activity.title}</h4>
-                                    <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{activity.description}</p>
-                                </div>
-                                <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{new Date(activity.createdAt).toLocaleDateString()}</span>
-                            </div>
-                        ))
-                    ) : (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No activities matching your search.</div>
-                    )}
-                </div>
-            </section>
         </DashboardLayout>
     );
 };

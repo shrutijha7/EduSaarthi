@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Save, Eye, ClipboardList } from 'lucide-react';
+import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Save, Eye, ClipboardList, ChevronDown, ChevronUp, X, Users } from 'lucide-react';
 
 import api, { API_BASE_URL } from '../utils/api';
 
@@ -9,19 +9,25 @@ const AssignmentWorkspace = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const [assignment, setAssignment] = useState(null);
+    const [subjectFiles, setSubjectFiles] = useState([]);
+    const [selectedExistingFile, setSelectedExistingFile] = useState(null);
+    const [loadingAssignment, setLoadingAssignment] = useState(true);
+    const [loadingAssessments, setLoadingAssessments] = useState(false);
+    const [previousAssessments, setPreviousAssessments] = useState([]);
     const [status, setStatus] = useState('idle'); // idle, processing, completed
     const [selectedFile, setSelectedFile] = useState(null);
-    const [selectedExistingFile, setSelectedExistingFile] = useState(null); // For selecting from subject files
-    const [taskType, setTaskType] = useState('question_generation');
-    const [generatedContent, setGeneratedContent] = useState(null);
-    const [assignment, setAssignment] = useState(null);
-    const [loadingAssignment, setLoadingAssignment] = useState(true);
-    const [questionCount, setQuestionCount] = useState(5);
-    const [subjectFiles, setSubjectFiles] = useState([]); // Files already uploaded to this subject
-    const [previousAssessments, setPreviousAssessments] = useState([]);
-    const [loadingAssessments, setLoadingAssessments] = useState(false);
     const [savingFile, setSavingFile] = useState(false);
+    const [taskType, setTaskType] = useState('question_generation');
+    const [questionCount, setQuestionCount] = useState(5);
+    const [generatedContent, setGeneratedContent] = useState(null);
     const [lastActivityId, setLastActivityId] = useState(null);
+    const [batches, setBatches] = useState([]);
+    const [selectedBatchId, setSelectedBatchId] = useState('');
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [emailDraft, setEmailDraft] = useState({ subject: '', body: '', recipients: [] });
+    const [sendingEmail, setSendingEmail] = useState(false);
+    const [showPreviousAssessments, setShowPreviousAssessments] = useState(true);
     const fileInputRef = useRef(null);
 
     // Detect if we're using subjects or courses based on URL
@@ -66,11 +72,27 @@ const AssignmentWorkspace = () => {
             }
         };
 
+        const fetchBatches = async () => {
+            try {
+                const response = await api.get('/api/batches');
+                setBatches(response.data.data.batches || []);
+                // If subject has batches, prefer those or select first available
+                if (isSubjectMode && assignment?.batches && assignment.batches.length > 0) {
+                    setSelectedBatchId(assignment.batches[0]);
+                } else if (response.data.data.batches?.length > 0) {
+                    setSelectedBatchId(response.data.data.batches[0]._id);
+                }
+            } catch (error) {
+                console.error('Error fetching batches:', error);
+            }
+        };
+
         if (id) {
             fetchAssignment();
             fetchAssessments();
+            fetchBatches();
         }
-    }, [id, apiEndpoint, itemKey, isSubjectMode, navigate]);
+    }, [id, apiEndpoint, itemKey, isSubjectMode, navigate, assignment?.batches]);
 
 
     const handleFileChange = (e) => {
@@ -145,8 +167,6 @@ const AssignmentWorkspace = () => {
             formData.append('questionCount', questionCount);
             formData.append('subjectId', id); // Pass subject/course ID
 
-            const token = localStorage.getItem('token');
-
             const response = await api.post('/api/activities/generate', formData);
 
             if (response.data.data.generatedContent) {
@@ -159,12 +179,63 @@ const AssignmentWorkspace = () => {
             }
 
             // Simulate steps delay for visual effect if needed, or just set completed
-            setTimeout(() => setStatus('completed'), 2000);
+            setTimeout(() => setStatus('completed'), 1000);
 
         } catch (error) {
             console.error('Error running automation:', error);
             setStatus('idle');
             alert(error.response?.data?.message || 'Failed to run automation. Please try again.');
+        }
+    };
+
+    const handlePrepareEmail = () => {
+        if (!generatedContent || !selectedBatchId) {
+            alert('Please generate assessment and select a batch first.');
+            return;
+        }
+
+        const batch = batches.find(b => b._id === selectedBatchId);
+        if (!batch || !batch.students || batch.students.length === 0) {
+            alert('Selected batch has no students.');
+            return;
+        }
+
+        const subject = `Assessment: ${assignment?.title || 'Course Material'}`;
+        let body = `Hello Students,\n\nAn assessment has been generated for you based on our recent course material.\n\n`;
+
+        if (generatedContent.type === 'questions') {
+            body += `Please review the following questions:\n\n`;
+            generatedContent.data.forEach((q, i) => body += `${i + 1}. ${q}\n`);
+        } else if (generatedContent.type === 'quiz') {
+            body += `A quiz is ready for you with ${generatedContent.data.length} questions.\n\n`;
+        }
+
+        body += `\nYou can view the full details in your student portal.\n\nBest regards,\nEduSaarthi AI`;
+
+        setEmailDraft({
+            subject,
+            body,
+            recipients: batch.students.map(s => s.email)
+        });
+        setShowEmailModal(true);
+    };
+
+    const handleSendEmail = async () => {
+        setSendingEmail(true);
+        try {
+            await api.post('/api/activities/send-manual', {
+                recipientEmail: emailDraft.recipients.join(','),
+                title: emailDraft.subject,
+                content: generatedContent,
+                fileName: selectedExistingFile?.originalName || selectedFile?.name || 'Course Material'
+            });
+            alert('Emails sent successfully!');
+            setShowEmailModal(false);
+        } catch (error) {
+            console.error('Error sending email:', error);
+            alert('Failed to send emails: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setSendingEmail(false);
         }
     };
 
@@ -232,17 +303,7 @@ const AssignmentWorkspace = () => {
                                 {assignment ? `Configure automation for ${assignment.title}` : 'Configure and execute your assignment automation workflow.'}
                             </p>
                         </div>
-                        {status === 'completed' && lastActivityId && (
-                            <button
-                                className="btn-primary"
-                                style={{ width: 'auto', background: 'var(--primary)', borderColor: 'var(--primary)' }}
-                                onClick={() => {
-                                    window.open(`/assessment/${lastActivityId}`, '_blank');
-                                }}
-                            >
-                                <Eye size={18} /> View Assessment
-                            </button>
-                        )}
+
                     </div>
                 </div>
 
@@ -331,93 +392,7 @@ const AssignmentWorkspace = () => {
                             </div>
                         )}
 
-                        {previousAssessments.length > 0 && (
-                            <div style={{ marginBottom: '2.5rem', marginTop: '2.5rem' }}>
-                                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <ClipboardList size={22} color="var(--primary)" />
-                                    Previously Generated Assessments
-                                </h3>
-                                <div style={{ display: 'grid', gap: '0.75rem' }}>
-                                    {previousAssessments.map((item) => (
-                                        <div
-                                            key={item._id}
-                                            onClick={() => {
-                                                setGeneratedContent(item.content);
-                                                setLastActivityId(item._id);
-                                                setStatus('completed');
-                                                window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll up to see results if they were at bottom
-                                            }}
-                                            style={{
-                                                padding: '1.25rem',
-                                                background: 'rgba(255,255,255,0.03)',
-                                                border: '1px solid var(--glass-border)',
-                                                borderRadius: '16px',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '1.25rem'
-                                            }}
-                                            onMouseOver={(e) => {
-                                                e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.08)';
-                                                e.currentTarget.style.borderColor = 'var(--primary)';
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                            }}
-                                            onMouseOut={(e) => {
-                                                e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                                                e.currentTarget.style.borderColor = 'var(--glass-border)';
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                            }}
-                                        >
-                                            <div style={{
-                                                width: '44px',
-                                                height: '44px',
-                                                borderRadius: '12px',
-                                                background: 'rgba(var(--primary-rgb), 0.15)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: 'var(--primary)'
-                                            }}>
-                                                <Sparkles size={20} />
-                                            </div>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '0.25rem' }}>
-                                                    {item.title}
-                                                </div>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                    {new Date(item.createdAt).toLocaleDateString()} · {item.type === 'quiz' ? 'Quiz' : 'Questions'} · Based on {item.fileName}
-                                                </div>
-                                            </div>
-                                            <div
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    window.open(`/assessment/${item._id}`, '_blank');
-                                                }}
-                                                style={{
-                                                    padding: '0.5rem',
-                                                    borderRadius: '8px',
-                                                    background: 'rgba(255,255,255,0.05)',
-                                                    color: 'var(--text-muted)',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                onMouseOver={(e) => {
-                                                    e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.2)';
-                                                    e.currentTarget.style.color = 'var(--primary)';
-                                                }}
-                                                onMouseOut={(e) => {
-                                                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                                                    e.currentTarget.style.color = 'var(--text-muted)';
-                                                }}
-                                            >
-                                                <Eye size={18} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+
 
                         <div
                             onDragOver={handleDragOver}
@@ -500,10 +475,37 @@ const AssignmentWorkspace = () => {
 
 
                         <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
-                            <div style={{ display: 'flex', gap: '1.5rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div>
+                                    <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Users size={18} color="var(--primary)" /> Recipient Batch
+                                    </h4>
+                                    <select
+                                        value={selectedBatchId}
+                                        onChange={(e) => setSelectedBatchId(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            background: 'rgba(0,0,0,0.2)',
+                                            border: '1px solid var(--glass-border)',
+                                            borderRadius: '12px',
+                                            color: 'white',
+                                            padding: '1rem',
+                                            outline: 'none',
+                                            fontSize: '0.875rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="" style={{ color: 'black' }}>Select a Batch...</option>
+                                        {batches.map(batch => (
+                                            <option key={batch._id} value={batch._id} style={{ color: 'black' }}>
+                                                {batch.name} ({batch.students.length} students)
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Sparkles size={18} color="var(--primary)" /> Select Task
+                                        <Sparkles size={18} color="var(--primary)" /> Task Type
                                     </h4>
                                     <select
                                         value={taskType}
@@ -525,7 +527,7 @@ const AssignmentWorkspace = () => {
                                     </select>
                                 </div>
                                 {(taskType === 'question_generation' || taskType === 'quiz') && (
-                                    <div style={{ width: '150px' }}>
+                                    <div style={{ width: '100%' }}>
                                         <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             Count
                                         </h4>
@@ -645,68 +647,212 @@ const AssignmentWorkspace = () => {
                                 )}
 
 
-                                <button
-                                    className="btn-primary"
-                                    style={{ marginTop: '2rem', width: 'auto' }}
-                                    onClick={() => { setStatus('idle'); setGeneratedContent(null); setSelectedFile(null); }}
-                                >
-                                    Run Another Task
-                                </button>
+                                <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem' }}>
+                                    <button
+                                        className="btn-primary"
+                                        style={{ width: 'auto', background: '#10b981', borderColor: '#10b981' }}
+                                        onClick={handlePrepareEmail}
+                                        disabled={!selectedBatchId}
+                                    >
+                                        <Zap size={18} /> Send to Batch
+                                    </button>
+                                    <button
+                                        className="btn-primary"
+                                        style={{ width: 'auto' }}
+                                        onClick={() => { setStatus('idle'); setGeneratedContent(null); setSelectedFile(null); }}
+                                    >
+                                        Run Another Task
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Email Review Modal */}
+                        {showEmailModal && (
+                            <div style={{
+                                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                                background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+                                display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                            }}>
+                                <div className="glass-card" style={{ width: '700px', maxWidth: '90%', maxHeight: '90vh', overflow: 'auto' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                        <h2 style={{ fontSize: '1.5rem' }}>Review & Edit Email</h2>
+                                        <button onClick={() => setShowEmailModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+
+                                    <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>To:</div>
+                                        <div style={{ fontSize: '0.9rem', maxHeight: '60px', overflowY: 'auto' }}>
+                                            {emailDraft.recipients.join(', ')}
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Subject</label>
+                                        <input
+                                            type="text"
+                                            value={emailDraft.subject}
+                                            onChange={(e) => setEmailDraft({ ...emailDraft, subject: e.target.value })}
+                                            style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Message Body</label>
+                                        <textarea
+                                            value={emailDraft.body}
+                                            onChange={(e) => setEmailDraft({ ...emailDraft, body: e.target.value })}
+                                            style={{ width: '100%', height: '250px', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white', resize: 'vertical' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                                        <button onClick={() => setShowEmailModal(false)} className="btn-primary" style={{ background: 'transparent', width: 'auto' }}>Cancel</button>
+                                        <button
+                                            onClick={handleSendEmail}
+                                            className="btn-primary"
+                                            style={{ width: 'auto', background: 'var(--primary)' }}
+                                            disabled={sendingEmail}
+                                        >
+                                            {sendingEmail ? 'Sending...' : 'Send Emails Now'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none', height: 'fit-content' }}>
-                        <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Workflow Status</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            {automationSteps.map((step, i) => (
-                                <div key={i} style={{
-                                    display: 'flex',
-                                    gap: '1.25rem',
-                                    opacity: status === 'idle' ? 0.5 : 1,
-                                    transition: 'opacity 0.3s'
-                                }}>
-                                    <div style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '10px',
-                                        background: status === 'completed' ? '#10b981' : (status === 'processing' ? 'var(--primary)' : 'rgba(255,255,255,0.05)'),
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {previousAssessments.length > 0 && (
+                            <div className="glass-card" style={{ padding: '0', maxWidth: 'none', overflow: 'hidden' }}>
+                                <div
+                                    onClick={() => setShowPreviousAssessments(!showPreviousAssessments)}
+                                    style={{
+                                        padding: '1.5rem 2rem',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
+                                        justifyContent: 'space-between',
+                                        cursor: 'pointer',
+                                        background: showPreviousAssessments ? 'rgba(var(--primary-rgb), 0.05)' : 'transparent',
                                         transition: 'all 0.3s'
-                                    }}>
-                                        <step.icon size={20} color="white" />
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <ClipboardList size={22} color="var(--primary)" />
+                                        <span style={{ fontSize: '1.1rem', fontWeight: '600' }}>Previous Assessments</span>
                                     </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.25rem' }}>{step.title}</div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{step.description}</div>
-                                    </div>
+                                    {showPreviousAssessments ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </div>
-                            ))}
-                        </div>
 
-                        {status === 'completed' && (
-                            <div style={{
-                                marginTop: '2rem',
-                                padding: '1rem',
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                borderRadius: '12px',
-                                border: '1px solid rgba(16, 185, 129, 0.2)',
-                                fontSize: '0.875rem',
-                                color: '#34d399',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}>
-                                <ShieldCheck size={18} /> All checks passed. Ready for review.
+                                {showPreviousAssessments && (
+                                    <div style={{ padding: '0 2rem 2rem 2rem', display: 'grid', gap: '0.75rem' }}>
+                                        {previousAssessments.map((item) => (
+                                            <div
+                                                key={item._id}
+                                                onClick={() => {
+                                                    setGeneratedContent(item.content);
+                                                    setLastActivityId(item._id);
+                                                    setStatus('completed');
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                                style={{
+                                                    padding: '1rem',
+                                                    background: 'rgba(255,255,255,0.03)',
+                                                    border: '1px solid var(--glass-border)',
+                                                    borderRadius: '12px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '1rem'
+                                                }}
+                                                onMouseOver={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.08)';
+                                                    e.currentTarget.style.borderColor = 'var(--primary)';
+                                                }}
+                                                onMouseOut={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                                                    e.currentTarget.style.borderColor = 'var(--glass-border)';
+                                                }}
+                                            >
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: '600', fontSize: '0.9rem', marginBottom: '0.1rem' }}>
+                                                        {item.title}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                        {new Date(item.createdAt).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`/assessment/${item._id}`, '_blank');
+                                                    }}
+                                                    style={{ color: 'var(--text-muted)' }}
+                                                >
+                                                    <Eye size={16} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
+
+                        <div className="glass-card" style={{ padding: '2rem', maxWidth: 'none', height: 'fit-content' }}>
+                            <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Workflow Status</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                {automationSteps.map((step, i) => (
+                                    <div key={i} style={{
+                                        display: 'flex',
+                                        gap: '1.25rem',
+                                        opacity: status === 'idle' ? 0.5 : 1,
+                                        transition: 'opacity 0.3s'
+                                    }}>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '10px',
+                                            background: status === 'completed' ? '#10b981' : (status === 'processing' ? 'var(--primary)' : 'rgba(255,255,255,0.05)'),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            flexShrink: 0,
+                                            transition: 'all 0.3s'
+                                        }}>
+                                            <step.icon size={20} color="white" />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.25rem' }}>{step.title}</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{step.description}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {status === 'completed' && (
+                                <div style={{
+                                    marginTop: '2rem',
+                                    padding: '1rem',
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                                    fontSize: '0.875rem',
+                                    color: '#34d399',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem'
+                                }}>
+                                    <ShieldCheck size={18} /> All checks passed. Ready for review.
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </DashboardLayout >
+        </DashboardLayout>
     );
 };
 

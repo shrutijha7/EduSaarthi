@@ -1,0 +1,55 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "Which hardware unit is specifically designed to combine arithmetic, logic, and shift micro-operations?",
+      "options": [
+        "The Input/Output interface controller",
+        "The Register Transfer Language module",
+        "The Arithmetic Logic Shift Unit",
+        "The Control Memory sequencer"
+      ],
+      "answer": "The Arithmetic Logic Shift Unit"
+    },
+    {
+      "question": "Which characteristic is typically associated with a Reduced Instruction Set Computer (RISC) architecture when compared to CISC?",
+      "options": [
+        "A large and complex set of instructions",
+        "Variable instruction formats and lengths",
+        "Emphasis on performing operations in memory",
+        "A limited set of simple, fixed-length instructions"
+      ],
+      "answer": "A limited set of simple, fixed-length instructions"
+    },
+    {
+      "question": "In virtual memory systems, what mechanism is used to divide the logical address space into fixed-size blocks, allowing non-contiguous allocation of memory?",
+      "options": [
+        "Segmentation",
+        "Interleaving",
+        "Paging",
+        "Sectoring"
+      ],
+      "answer": "Paging"
+    },
+    {
+      "question": "What I/O communication technique allows peripheral devices to transfer data directly to or from main memory without requiring continuous intervention from the Central Processing Unit (CPU)?",
+      "options": [
+        "Programmed IO",
+        "Direct Memory Access (DMA)",
+        "Memory Mapped IO",
+        "Interrupt Driven IO"
+      ],
+      "answer": "Direct Memory Access (DMA)"
+    },
+    {
+      "question": "What issue arises in multiprocessor systems when multiple caches hold different, inconsistent copies of the same shared memory block?",
+      "options": [
+        "Bus arbitration failure",
+        "Inter-processor synchronization lock",
+        "Cache Coherence problem",
+        "Virtual memory thrashing"
+      ],
+      "answer": "Cache Coherence problem"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "What is the fundamental characteristic of the Von-Neumann Architecture concerning data and instructions?",
+      "options": [
+        "It utilizes separate physical memory spaces for data and instructions.",
+        "It requires a dedicated bus structure exclusively for control signals.",
+        "It uses a single shared memory space and bus for both instructions and data.",
+        "It executes instructions solely through complex micro-programmed sequences."
+      ]
+    },
+    {
+      "question": "Which instruction set architecture is typically characterized by a large number of complex instructions that often require multiple clock cycles to execute?",
+      "options": [
+        "Reduced Instruction Set Computer (RISC)",
+        "Very Long Instruction Word (VLIW)",
+        "Complex Instruction Set Computer (CISC)",
+        "Explicitly Parallel Instruction Computing (EPIC)"
+      ]
+    },
+    {
+      "question": "Which hardware unit is specifically designed to combine arithmetic, logic, and shift micro-operations?",
+      "options": [
+        "The Cache Controller",
+        "The Arithmetic Logic Shift Unit",
+        "The Interrupt Handler",
+        "The Register Transfer Bus"
+      ]
+    },
+    {
+      "question": "In the context of computer arithmetic, which process is essential for performing floating-point addition or subtraction?",
+      "options": [
+        "Direct conversion to BCD (Binary Coded Decimal)",
+        "Alignment of exponents prior to significand manipulation",
+        "Exclusive use of fixed-point registers",
+        "Execution of stack organization procedures"
+      ]
+    },
+    {
+      "question": "What is the primary function of Paging within a virtual memory system?",
+      "options": [
+        "To arbitrate communication between multiple processors.",
+        "To divide the logical address space into fixed-size blocks.",
+        "To manage high-speed data transfer via DMA channels.",
+        "To implement error detection and correction codes on memory contents."
+      ]
+    }
+  ]
+}

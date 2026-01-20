@@ -104,11 +104,13 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
             content: generatedContent // Store the actual generated JSON
         });
 
+        /* 
         // 6. Send Email Notification if enabled
         if (req.user.notificationsEnabled !== false) {
             const emailHtml = formatEmailBody(activityTitle, generatedContent || { type: 'status', data: activityDescription }, originalName);
             await sendEmail(req.user.email, `Automation Complete: ${activityTitle}`, emailHtml);
         }
+        */
 
         // Create results folder if it doesn't exist
         const resultsDir = path.join(__dirname, '../results');
@@ -138,7 +140,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
             generatedContent.data.forEach((item, i) => {
                 textContent += `Q${i + 1}: ${item.question}\n`;
                 item.options.forEach((opt, j) => textContent += `   ${String.fromCharCode(65 + j)}) ${opt}\n`);
-                textContent += `   Answer: ${item.answer}\n\n`;
+                textContent += `\n`;
             });
         }
 
@@ -237,38 +239,65 @@ router.get('/scheduled', protect, async (req, res) => {
 
 // Helper function to format email body
 const formatEmailBody = (title, content, fileName) => {
-    let html = `<div style="font-family: sans-serif; padding: 20px; color: #333;">`;
-    html += `<h2 style="color: #6366f1;">${title}</h2>`;
-    html += `<p>Assignment Automation Update for: <strong>${fileName}</strong></p>`;
-    html += `<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;
+    let questionsHtml = '';
 
     if (content.type === 'questions' && Array.isArray(content.data)) {
-        html += '<p>The following questions were generated:</p><ul>';
-        content.data.forEach(q => html += `<li style="margin-bottom: 10px;">${q}</li>`);
-        html += '</ul>';
-    } else if (content.type === 'quiz' && Array.isArray(content.data)) {
-        html += '<p>The following quiz was generated:</p>';
-        content.data.forEach((item, index) => {
-            html += `<div style="margin-bottom: 20px; padding: 10px; background: #f3f4f6; border-radius: 8px;">`;
-            html += `<p><strong>Q${index + 1}: ${item.question}</strong></p>`;
-            html += `<ul style="list-style-type: none; padding-left: 0;">`;
-            item.options.forEach(opt => {
-                html += `<li style="margin-bottom: 5px; padding: 5px; border: 1px solid #ddd; ${opt === item.answer ? 'background: #d1fae5; font-bold: true;' : ''}">${opt}</li>`;
-            });
-            html += `</ul>`;
-            html += `<p style="font-size: 0.8rem; color: #059669;">Correct Answer: ${item.answer}</p>`;
-            html += `</div>`;
+        content.data.forEach((q, i) => {
+            questionsHtml += `
+                <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e293b;">Question ${i + 1}</p>
+                    <p style="margin: 8px 0 0; color: #475569;">${q}</p>
+                </div>
+            `;
         });
-    } else if (content.type === 'status') {
-        html += `<p>${content.data}</p>`;
-    } else {
-        html += `<p>Your task has been processed successfully. You can view the results in your dashboard.</p>`;
+    } else if (content.type === 'quiz' && Array.isArray(content.data)) {
+        content.data.forEach((item, i) => {
+            questionsHtml += `
+                <div style="margin-bottom: 20px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                    <div style="margin-top: 12px; display: grid; gap: 8px;">
+                        ${item.options.map((opt, j) => `
+                            <div style="padding: 8px 12px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; color: #475569;">
+                                <strong>${String.fromCharCode(65 + j)}.</strong> ${opt}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
     }
 
-    html += `<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;
-    html += `<p style="font-size: 0.8rem; color: #6b7280;">This is an automated notification from Edusaarthi AI. You can disable these emails in your Settings.</p>`;
-    html += `</div>`;
-    return html;
+    return `
+        <div style="background-color: #f1f5f9; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 32px; color: white; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 700;">EduSaarthi Assessment</h1>
+                    <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">Academic Evaluation Portal</p>
+                </div>
+                <div style="padding: 32px; color: #1e293b; line-height: 1.6;">
+                    <p style="margin-top: 0; font-weight: 600; font-size: 16px;">Dear Student,</p>
+                    <p style="margin-bottom: 24px; color: #475569;">An assessment has been generated for you based on the course material: <strong>${fileName}</strong>.</p>
+                    
+                    <div style="margin: 24px 0; padding: 16px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #6366f1;">
+                        <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Topic / Category</span>
+                        <span style="font-weight: 600; color: #0f172a;">${title}</span>
+                    </div>
+
+                    <div style="margin-top: 32px;">
+                        ${questionsHtml || `<p style="text-align: center; color: #94a3b8;">${content.data && typeof content.data === 'string' ? content.data : 'Assessment processed successfully.'}</p>`}
+                    </div>
+
+                    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0; font-size: 14px; color: #64748b;">Please review these materials to enhance your understanding of the subject. Best of luck with your studies!</p>
+                    </div>
+                </div>
+                <div style="background: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0; font-size: 12px; color: #94a3b8;">&copy; 2026 EduSaarthi AI Learning. All rights reserved.</p>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #cbd5e1;">This is a system-generated academic notification.</p>
+                </div>
+            </div>
+        </div>
+    `;
 };
 
 // Get user activities
@@ -362,25 +391,6 @@ router.post('/send-manual', protect, async (req, res) => {
 
         // This uses the same formatting as the automatic send
         // (Note: In a more modular setup, we'd export formatEmailBody from a shared utility)
-        const formatEmailBody = (title, content, fileName) => {
-            let html = `<h2>${title}</h2><p>Here is the content generated from your file: <strong>${fileName}</strong></p>`;
-            if (content.type === 'questions') {
-                html += '<ul>';
-                content.data.forEach(q => html += `<li>${q}</li>`);
-                html += '</ul>';
-            } else if (content.type === 'quiz') {
-                content.data.forEach((item, index) => {
-                    html += `<p><strong>Q${index + 1}: ${item.question}</strong></p><ul>`;
-                    item.options.forEach(opt => {
-                        html += `<li>${opt} ${opt === item.answer ? '(Correct)' : ''}</li>`;
-                    });
-                    html += `</ul>`;
-                });
-            }
-            html += '<br><p>Sent via Edusaarthi Assignment Automation</p>';
-            return html;
-        };
-
         const emailHtml = formatEmailBody(title, content, fileName);
 
         for (const email of emails) {

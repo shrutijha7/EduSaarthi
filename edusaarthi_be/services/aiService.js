@@ -80,7 +80,7 @@ const generateQuiz = async (text, count = 5) => {
     EXAMPLE OF WHAT TO DO: "What is the primary function of an arithmetic logic shift unit?" (THIS IS PASS)
 
     FORMAT: Return ONLY a JSON array of objects.
-    JSON: [{ "question": "...", "options": ["...", "...", "...", "..."], "answer": "..." }]
+    JSON: [{ "question": "...", "options": ["...", "...", "...", "..."] }]
 
     DATA SOURCE:
     ${text.substring(0, 15000)}

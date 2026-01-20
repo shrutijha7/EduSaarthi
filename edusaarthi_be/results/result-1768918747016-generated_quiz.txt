@@ -1,0 +1,36 @@
+Generated Quiz
+==============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 20/1/2026, 7:49:07 pm
+
+Q1: What is the fundamental characteristic of the Von-Neumann Architecture concerning data and instructions?
+   A) It utilizes separate physical memory spaces for data and instructions.
+   B) It requires a dedicated bus structure exclusively for control signals.
+   C) It uses a single shared memory space and bus for both instructions and data.
+   D) It executes instructions solely through complex micro-programmed sequences.
+
+Q2: Which instruction set architecture is typically characterized by a large number of complex instructions that often require multiple clock cycles to execute?
+   A) Reduced Instruction Set Computer (RISC)
+   B) Very Long Instruction Word (VLIW)
+   C) Complex Instruction Set Computer (CISC)
+   D) Explicitly Parallel Instruction Computing (EPIC)
+
+Q3: Which hardware unit is specifically designed to combine arithmetic, logic, and shift micro-operations?
+   A) The Cache Controller
+   B) The Arithmetic Logic Shift Unit
+   C) The Interrupt Handler
+   D) The Register Transfer Bus
+
+Q4: In the context of computer arithmetic, which process is essential for performing floating-point addition or subtraction?
+   A) Direct conversion to BCD (Binary Coded Decimal)
+   B) Alignment of exponents prior to significand manipulation
+   C) Exclusive use of fixed-point registers
+   D) Execution of stack organization procedures
+
+Q5: What is the primary function of Paging within a virtual memory system?
+   A) To arbitrate communication between multiple processors.
+   B) To divide the logical address space into fixed-size blocks.
+   C) To manage high-speed data transfer via DMA channels.
+   D) To implement error detection and correction codes on memory contents.
+

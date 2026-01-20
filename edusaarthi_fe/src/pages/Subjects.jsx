@@ -23,10 +23,13 @@ const Subjects = () => {
     const [showModal, setShowModal] = React.useState(false);
     const [showEditModal, setShowEditModal] = React.useState(false);
     const [showBatchModal, setShowBatchModal] = React.useState(false);
+    const [showEditBatchModal, setShowEditBatchModal] = React.useState(false);
     const [editItem, setEditItem] = React.useState({ id: '', title: '' });
     const [newItem, setNewItem] = React.useState({ title: '', files: [], selectedBatches: [] });
     const [newBatch, setNewBatch] = React.useState({ name: '', description: '', students: [] });
+    const [editingBatch, setEditingBatch] = React.useState(null);
     const [studentInput, setStudentInput] = React.useState({ name: '', email: '', rollNumber: '' });
+    const [selectedBatchId, setSelectedBatchId] = React.useState('all');
     const navigate = useNavigate();
 
     React.useEffect(() => {
@@ -105,6 +108,38 @@ const Subjects = () => {
         } catch (error) {
             console.error('Error creating batch:', error);
             alert('Failed to create batch: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleEditBatchClick = (e, batch) => {
+        e.stopPropagation();
+        setEditingBatch({ ...batch });
+        setShowEditBatchModal(true);
+    };
+
+    const handleUpdateBatch = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await api.patch(`/api/batches/${editingBatch._id}`, editingBatch);
+            const updatedBatch = response.data.data.batch;
+            setBatches(prev => prev.map(b => b._id === updatedBatch._id ? updatedBatch : b));
+            setShowEditBatchModal(false);
+            setEditingBatch(null);
+        } catch (error) {
+            console.error('Error updating batch:', error);
+            alert('Failed to update batch: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleDeleteBatch = async (e, id) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to delete this batch?')) return;
+        try {
+            await api.delete(`/api/batches/${id}`);
+            setBatches(prev => prev.filter(b => b._id !== id));
+            if (selectedBatchId === id) setSelectedBatchId('all');
+        } catch (error) {
+            console.error('Error deleting batch:', error);
         }
     };
 
@@ -241,14 +276,92 @@ const Subjects = () => {
     return (
         <DashboardLayout>
             <div className="page-transition">
-                <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="animate-slide-up">
-                    <div>
-                        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>My Subjects</h1>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Manage your subjects and process documents with AI.</p>
+                <header style={{ marginBottom: '3rem' }} className="animate-slide-up">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                        <div>
+                            <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>My Subjects</h1>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Manage your subjects and process documents with AI.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button className="btn-primary pulse-primary" style={{ width: 'auto' }} onClick={() => setShowModal(true)}>
+                                <Plus size={20} /> New Subject
+                            </button>
+                        </div>
                     </div>
-                    <button className="btn-primary pulse-primary" style={{ width: 'auto' }} onClick={() => setShowModal(true)}>
-                        <Plus size={20} /> New Subject
-                    </button>
+
+                    {/* Batch Management Panel at top left */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)', overflowX: 'auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: '600', minWidth: 'fit-content' }}>
+                            <Users size={20} />
+                            <span>Batches:</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <button
+                                onClick={() => setSelectedBatchId('all')}
+                                style={{
+                                    padding: '0.4rem 1rem',
+                                    borderRadius: '20px',
+                                    background: selectedBatchId === 'all' ? 'var(--primary)' : 'rgba(0,0,0,0.2)',
+                                    color: selectedBatchId === 'all' ? 'white' : 'var(--text-muted)',
+                                    border: '1px solid var(--glass-border)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    transition: 'all 0.2s',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                All Subjects
+                            </button>
+                            {batches.map(batch => (
+                                <div key={batch._id} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    <button
+                                        onClick={() => setSelectedBatchId(batch._id)}
+                                        style={{
+                                            padding: '0.4rem 1rem',
+                                            borderRadius: '20px',
+                                            background: selectedBatchId === batch._id ? 'var(--primary)' : 'rgba(0,0,0,0.2)',
+                                            color: selectedBatchId === batch._id ? 'white' : 'var(--text-muted)',
+                                            border: '1px solid var(--glass-border)',
+                                            cursor: 'pointer',
+                                            fontSize: '0.875rem',
+                                            transition: 'all 0.2s',
+                                            whiteSpace: 'nowrap',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem'
+                                        }}
+                                    >
+                                        {batch.name}
+                                        <div
+                                            onClick={(e) => handleEditBatchClick(e, batch)}
+                                            style={{ display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                                            title="Edit Batch"
+                                        >
+                                            <Edit3 size={12} />
+                                        </div>
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                onClick={() => setShowBatchModal(true)}
+                                style={{
+                                    padding: '0.4rem 1rem',
+                                    borderRadius: '20px',
+                                    background: 'transparent',
+                                    color: 'var(--primary)',
+                                    border: '1px dashed var(--primary)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.875rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                <Plus size={14} /> New Batch
+                            </button>
+                        </div>
+                    </div>
                 </header>
 
                 {subjects.length === 0 && (
@@ -562,10 +675,159 @@ const Subjects = () => {
                     </div>
                 )}
 
+                {/* Edit Batch Modal */}
+                {showEditBatchModal && editingBatch && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1001,
+                        overflow: 'auto', padding: '2rem'
+                    }}>
+                        <div className="glass-card" style={{ width: '600px', maxWidth: '90%', maxHeight: '90vh', overflow: 'auto' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                <h2 style={{ fontSize: '1.5rem' }}>Edit Batch: {editingBatch.name}</h2>
+                                <button onClick={() => setShowEditBatchModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleUpdateBatch}>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Batch Name</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                        value={editingBatch.name}
+                                        onChange={e => setEditingBatch({ ...editingBatch, name: e.target.value })}
+                                        placeholder="e.g. Class 10A"
+                                    />
+                                </div>
+
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Description (Optional)</label>
+                                    <textarea
+                                        style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white', minHeight: '60px', resize: 'vertical' }}
+                                        value={editingBatch.description}
+                                        onChange={e => setEditingBatch({ ...editingBatch, description: e.target.value })}
+                                        placeholder="Brief description of this batch"
+                                    />
+                                </div>
+
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                                        Students
+                                    </label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px auto', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Name"
+                                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                            value={studentInput.name}
+                                            onChange={e => setStudentInput({ ...studentInput, name: e.target.value })}
+                                        />
+                                        <input
+                                            type="email"
+                                            placeholder="Email"
+                                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                            value={studentInput.email}
+                                            onChange={e => setStudentInput({ ...studentInput, email: e.target.value })}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Roll #"
+                                            style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                            value={studentInput.rollNumber}
+                                            onChange={e => setStudentInput({ ...studentInput, rollNumber: e.target.value })}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (studentInput.name && studentInput.email) {
+                                                    setEditingBatch({
+                                                        ...editingBatch,
+                                                        students: [...editingBatch.students, { ...studentInput }]
+                                                    });
+                                                    setStudentInput({ name: '', email: '', rollNumber: '' });
+                                                }
+                                            }}
+                                            style={{
+                                                background: 'var(--primary)',
+                                                border: 'none',
+                                                color: 'white',
+                                                borderRadius: '8px',
+                                                cursor: 'pointer',
+                                                padding: '0.75rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <Plus size={18} />
+                                        </button>
+                                    </div>
+
+                                    {/* Students List */}
+                                    {editingBatch.students.length > 0 && (
+                                        <div style={{ maxHeight: '200px', overflow: 'auto', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                                            {editingBatch.students.map((student, index) => (
+                                                <div
+                                                    key={index}
+                                                    style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        padding: '0.5rem',
+                                                        background: 'rgba(0,0,0,0.3)',
+                                                        borderRadius: '6px',
+                                                        marginBottom: '0.5rem'
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <div style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>
+                                                            {student.name} {student.rollNumber && `(${student.rollNumber})`}
+                                                        </div>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                            {student.email}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const updatedStudents = editingBatch.students.filter((_, i) => i !== index);
+                                                            setEditingBatch({ ...editingBatch, students: updatedStudents });
+                                                        }}
+                                                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => handleDeleteBatch(e, editingBatch._id)}
+                                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.875rem' }}
+                                    >
+                                        Delete Batch
+                                    </button>
+                                    <button type="submit" className="btn-primary" style={{ width: 'auto' }}>Update Batch</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
                     {subjects.filter(s => {
                         const q = searchParams.get('q')?.toLowerCase() || '';
-                        return s.title.toLowerCase().includes(q);
+                        const matchesSearch = s.title.toLowerCase().includes(q);
+                        const matchesBatch = selectedBatchId === 'all' || (s.batches && s.batches.some(b => (b._id || b) === selectedBatchId));
+                        return matchesSearch && matchesBatch;
                     }).map((subject, i) => (
                         <div
                             key={i}

@@ -1,0 +1,50 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "Which hardware unit is specifically designed to integrate and execute arithmetic, logic, and shift micro-operations?",
+      "options": [
+        "Address Sequencing Unit",
+        "Control Memory Register",
+        "Arithmetic Logic Shift Unit",
+        "Instruction Decoder Register"
+      ]
+    },
+    {
+      "question": "Which input/output technique allows peripheral devices to transfer blocks of data directly to and from main memory without requiring the continuous involvement of the Central Processing Unit?",
+      "options": [
+        "Programmed I/O",
+        "Interrupt Driven I/O",
+        "Memory Mapped I/O",
+        "Direct Memory Access (DMA)"
+      ]
+    },
+    {
+      "question": "In the context of processor design, which attribute is characteristic of a Complex Instruction Set Computer (CISC) architecture when compared to a Reduced Instruction Set Computer (RISC) architecture?",
+      "options": [
+        "A large number of general-purpose registers",
+        "Execution primarily driven by hardwired control logic",
+        "Simple, fixed-length instruction formats",
+        "Complex, variable-length instructions and numerous addressing modes"
+      ]
+    },
+    {
+      "question": "What is the primary purpose of utilizing error detection and correction codes in computer systems?",
+      "options": [
+        "To improve the speed of floating-point arithmetic operations",
+        "To ensure the integrity and reliability of data representation and transfer",
+        "To manage the translation between physical and virtual addresses",
+        "To optimize the structure of the instruction pipeline"
+      ]
+    },
+    {
+      "question": "In a virtual memory system, what technique is used to divide the main memory and the virtual address space into equal, fixed-size blocks?",
+      "options": [
+        "Segmentation",
+        "Paging",
+        "Cache Coherence",
+        "Swapping"
+      ]
+    }
+  ]
+}

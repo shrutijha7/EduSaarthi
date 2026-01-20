@@ -1,0 +1,41 @@
+Generated Quiz
+==============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 20/1/2026, 5:26:06 pm
+
+Q1: Which architectural design philosophy typically prioritizes simple, single-cycle instructions and relies on optimizing compiler technology for performance?
+   A) Complex Instruction Set Computing (CISC)
+   B) Reduced Instruction Set Computing (RISC)
+   C) Von-Neumann Architecture
+   D) Multiprocessor Interconnection
+   Answer: Reduced Instruction Set Computing (RISC)
+
+Q2: In virtual memory systems, the process of dividing the logical address space into fixed-size blocks that are mapped to physical memory frames is specifically referred to as what?
+   A) Segmentation
+   B) Caching
+   C) Paging
+   D) Interleaving
+   Answer: Paging
+
+Q3: Which I/O communication technique allows peripheral devices to transfer data directly to or from main memory without the continuous involvement of the Central Processing Unit (CPU)?
+   A) Programmed I/O
+   B) Interrupt Driven I/O
+   C) Memory Mapped I/O
+   D) Direct Memory Access (DMA)
+   Answer: Direct Memory Access (DMA)
+
+Q4: In a computer system utilizing micro-programmed control, the sequence of micro-instructions necessary to execute a machine instruction is stored within which specialized component?
+   A) Instruction Register
+   B) Program Counter
+   C) Control Memory
+   D) Arithmetic Logic Shift Unit
+   Answer: Control Memory
+
+Q5: What is the primary technical advantage achieved by using floating-point data representation over fixed-point representation in computer arithmetic?
+   A) Increased execution speed for integer addition
+   B) The ability to represent a significantly wider range of magnitudes
+   C) Simplified hardware design for the Arithmetic Logic Unit (ALU)
+   D) Guaranteed error detection for all overflow conditions
+   Answer: The ability to represent a significantly wider range of magnitudes
+

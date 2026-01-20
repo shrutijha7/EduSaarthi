@@ -1,0 +1,55 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "Which hardware unit is specifically designed to combine arithmetic, logic, and shift micro-operations?",
+      "options": [
+        "Control Memory",
+        "Instruction Register",
+        "Arithmetic Logic Shift Unit",
+        "Memory Address Register"
+      ],
+      "answer": "Arithmetic Logic Shift Unit"
+    },
+    {
+      "question": "Which architecture concept defines the computer structure based on a single, shared bus for both data and instructions?",
+      "options": [
+        "Harvard Architecture",
+        "Von-Neumann Architecture",
+        "Multicomputer System",
+        "Pipelined Architecture"
+      ],
+      "answer": "Von-Neumann Architecture"
+    },
+    {
+      "question": "In the context of virtual memory management, which mechanism relies on dividing the logical address space into fixed-size blocks?",
+      "options": [
+        "Segmentation",
+        "Paging",
+        "Swapping",
+        "Interleaving"
+      ],
+      "answer": "Paging"
+    },
+    {
+      "question": "Which input/output technique allows peripheral devices to transfer data directly to or from main memory without requiring continuous intervention from the Central Processing Unit?",
+      "options": [
+        "Programmed I/O",
+        "Memory Mapped I/O",
+        "Interrupt Driven I/O",
+        "Direct Memory Access (DMA)"
+      ],
+      "answer": "Direct Memory Access (DMA)"
+    },
+    {
+      "question": "In a multiprocessor system utilizing cache memory, what mechanism is necessary to ensure that all processors see the most up-to-date value of a shared memory location?",
+      "options": [
+        "Inter Processor Arbitration",
+        "Register Transfer Language",
+        "Bus Structure Redundancy",
+        "Cache Coherence"
+      ],
+      "answer": "Cache Coherence"
+    }
+  ]
+}

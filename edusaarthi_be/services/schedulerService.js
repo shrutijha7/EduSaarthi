@@ -58,38 +58,73 @@ const executeTask = async (task) => {
         const emails = task.recipientEmails.split(',').map(e => e.trim()).filter(e => e);
 
         const formatEmailBody = (title, content, fileName) => {
-            let html = `<div style="font-family: sans-serif; padding: 20px; color: #333;">`;
-            html += `<h2 style="color: #6366f1;">${title}</h2>`;
-            html += `<p>Scheduled Automation Result for: <strong>${fileName}</strong></p>`;
-            html += `<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;
+            let questionsHtml = '';
 
             if (content.type === 'questions' && Array.isArray(content.data)) {
-                html += '<p>The following questions were generated:</p><ul>';
-                content.data.forEach(q => html += `<li style="margin-bottom: 10px;">${q}</li>`);
-                html += '</ul>';
+                content.data.forEach((q, i) => {
+                    questionsHtml += `
+                <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e293b;">Question ${i + 1}</p>
+                    <p style="margin: 8px 0 0; color: #475569;">${q}</p>
+                </div>
+            `;
+                });
             } else if (content.type === 'quiz' && Array.isArray(content.data)) {
-                html += '<p>The following quiz was generated:</p>';
-                content.data.forEach((item, index) => {
-                    html += `<div style="margin-bottom: 20px; padding: 10px; background: #f3f4f6; border-radius: 8px;">`;
-                    html += `<p><strong>Q${index + 1}: ${item.question}</strong></p><ul>`;
-                    item.options.forEach(opt => {
-                        html += `<li>${opt} ${opt === item.answer ? '(Correct)' : ''}</li>`;
-                    });
-                    html += `</ul></div>`;
+                content.data.forEach((item, i) => {
+                    questionsHtml += `
+                <div style="margin-bottom: 20px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                    <div style="margin-top: 12px;">
+                        ${item.options.map((opt, j) => `
+                            <div style="margin-bottom: 8px; padding: 8px 12px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; color: #475569;">
+                                <strong>${String.fromCharCode(65 + j)}.</strong> ${opt}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
                 });
             }
 
-            html += `<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">`;
-            html += `<p style="font-size: 0.8rem; color: #6b7280;">Sent via Edusaarthi AI</p>`;
-            html += `</div>`;
-            return html;
+            return `
+        <div style="background-color: #f1f5f9; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 32px; color: white; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 700;">EduSaarthi Assessment</h1>
+                    <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">Academic Evaluation Portal</p>
+                </div>
+                <div style="padding: 32px; color: #1e293b; line-height: 1.6;">
+                    <p style="margin-top: 0; font-weight: 600; font-size: 16px;">Dear Student,</p>
+                    <p style="margin-bottom: 24px; color: #475569;">A scheduled assessment has been prepared for you based on: <strong>${fileName}</strong>.</p>
+                    
+                    <div style="margin: 24px 0; padding: 16px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #6366f1;">
+                        <span style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Topic / Category</span>
+                        <span style="font-weight: 600; color: #0f172a;">${title}</span>
+                    </div>
+
+                    <div style="margin-top: 32px;">
+                        ${questionsHtml || `<p style="text-align: center; color: #94a3b8;">Assessment processed successfully.</p>`}
+                    </div>
+
+                    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0; font-size: 14px; color: #64748b;">This task was automatically processed at your scheduled time. Best of luck with your studies!</p>
+                    </div>
+                </div>
+                <div style="background: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0; font-size: 12px; color: #94a3b8;">&copy; 2026 EduSaarthi AI Learning. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    `;
         };
 
         const emailHtml = formatEmailBody(activityTitle, generatedContent, task.originalFileName);
 
+        /*
         for (const email of emails) {
             await sendEmail(email, `Edusaarthi Scheduled Task: ${activityTitle}`, emailHtml);
         }
+        */
 
         // 4. Update Task Status
         task.status = 'completed';

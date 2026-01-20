@@ -1,0 +1,55 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "Which architectural design philosophy typically prioritizes simple, single-cycle instructions and relies on optimizing compiler technology for performance?",
+      "options": [
+        "Complex Instruction Set Computing (CISC)",
+        "Reduced Instruction Set Computing (RISC)",
+        "Von-Neumann Architecture",
+        "Multiprocessor Interconnection"
+      ],
+      "answer": "Reduced Instruction Set Computing (RISC)"
+    },
+    {
+      "question": "In virtual memory systems, the process of dividing the logical address space into fixed-size blocks that are mapped to physical memory frames is specifically referred to as what?",
+      "options": [
+        "Segmentation",
+        "Caching",
+        "Paging",
+        "Interleaving"
+      ],
+      "answer": "Paging"
+    },
+    {
+      "question": "Which I/O communication technique allows peripheral devices to transfer data directly to or from main memory without the continuous involvement of the Central Processing Unit (CPU)?",
+      "options": [
+        "Programmed I/O",
+        "Interrupt Driven I/O",
+        "Memory Mapped I/O",
+        "Direct Memory Access (DMA)"
+      ],
+      "answer": "Direct Memory Access (DMA)"
+    },
+    {
+      "question": "In a computer system utilizing micro-programmed control, the sequence of micro-instructions necessary to execute a machine instruction is stored within which specialized component?",
+      "options": [
+        "Instruction Register",
+        "Program Counter",
+        "Control Memory",
+        "Arithmetic Logic Shift Unit"
+      ],
+      "answer": "Control Memory"
+    },
+    {
+      "question": "What is the primary technical advantage achieved by using floating-point data representation over fixed-point representation in computer arithmetic?",
+      "options": [
+        "Increased execution speed for integer addition",
+        "The ability to represent a significantly wider range of magnitudes",
+        "Simplified hardware design for the Arithmetic Logic Unit (ALU)",
+        "Guaranteed error detection for all overflow conditions"
+      ],
+      "answer": "The ability to represent a significantly wider range of magnitudes"
+    }
+  ]
+}

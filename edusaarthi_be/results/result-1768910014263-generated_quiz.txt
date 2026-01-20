@@ -1,0 +1,41 @@
+Generated Quiz
+==============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 20/1/2026, 5:23:34 pm
+
+Q1: Which hardware unit is specifically designed to combine arithmetic, logic, and shift micro-operations?
+   A) The Input/Output interface controller
+   B) The Register Transfer Language module
+   C) The Arithmetic Logic Shift Unit
+   D) The Control Memory sequencer
+   Answer: The Arithmetic Logic Shift Unit
+
+Q2: Which characteristic is typically associated with a Reduced Instruction Set Computer (RISC) architecture when compared to CISC?
+   A) A large and complex set of instructions
+   B) Variable instruction formats and lengths
+   C) Emphasis on performing operations in memory
+   D) A limited set of simple, fixed-length instructions
+   Answer: A limited set of simple, fixed-length instructions
+
+Q3: In virtual memory systems, what mechanism is used to divide the logical address space into fixed-size blocks, allowing non-contiguous allocation of memory?
+   A) Segmentation
+   B) Interleaving
+   C) Paging
+   D) Sectoring
+   Answer: Paging
+
+Q4: What I/O communication technique allows peripheral devices to transfer data directly to or from main memory without requiring continuous intervention from the Central Processing Unit (CPU)?
+   A) Programmed IO
+   B) Direct Memory Access (DMA)
+   C) Memory Mapped IO
+   D) Interrupt Driven IO
+   Answer: Direct Memory Access (DMA)
+
+Q5: What issue arises in multiprocessor systems when multiple caches hold different, inconsistent copies of the same shared memory block?
+   A) Bus arbitration failure
+   B) Inter-processor synchronization lock
+   C) Cache Coherence problem
+   D) Virtual memory thrashing
+   Answer: Cache Coherence problem
+
