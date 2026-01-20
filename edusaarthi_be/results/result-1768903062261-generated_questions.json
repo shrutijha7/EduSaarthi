@@ -1,0 +1,10 @@
+{
+  "type": "questions",
+  "data": [
+    "Analyze the inherent limitations of the classical stored-program architecture regarding instruction and data flow, and explain how modern multiprocessor systems attempt to mitigate this fundamental bottleneck through architectural or memory management strategies.",
+    "Compare the fundamental design philosophies of complex instruction sets (CISC) and reduced instruction sets (RISC). Justify why a highly pipelined processor architecture typically favors a RISC approach, focusing on instruction uniformality and addressing mode complexity.",
+    "Contrast the operational flexibility and execution speed of a hardwired control unit versus a micro-programmed control unit. Provide a scenario where the complexity of implementing new arithmetic or logic micro-operations would mandate the use of micro-programming.",
+    "Discuss the necessity of cache coherence protocols in shared-memory multiprocessor systems. Detail the specific problems that arise when multiple processing elements attempt to access and modify the same data block within a multi-level memory hierarchy, particularly concerning write operations.",
+    "Explain the crucial difference in CPU utilization between Programmed I/O and Direct Memory Access (DMA) techniques for high-volume data transfers. Under what specific conditions would an operating system designer choose to implement Interrupt Driven I/O over DMA, despite the potential for lower throughput?"
+  ]
+}

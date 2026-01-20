@@ -11,7 +11,8 @@ const activitySchema = new mongoose.Schema({
         type: String,
         enum: ['course_complete', 'lesson_complete', 'assignment_submit', 'signup', 'question_generation', 'quiz', 'automation'],
         default: 'lesson_complete'
-    }
+    },
+    content: { type: mongoose.Schema.Types.Mixed } // Store the generated assessment results (JSON)
 }, { timestamps: true });
 
 module.exports = mongoose.model('Activity', activitySchema);

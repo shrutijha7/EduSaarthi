@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Save, Eye } from 'lucide-react';
+import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Save, Eye, ClipboardList } from 'lucide-react';
 
 import api, { API_BASE_URL } from '../utils/api';
 
@@ -18,7 +18,10 @@ const AssignmentWorkspace = () => {
     const [loadingAssignment, setLoadingAssignment] = useState(true);
     const [questionCount, setQuestionCount] = useState(5);
     const [subjectFiles, setSubjectFiles] = useState([]); // Files already uploaded to this subject
+    const [previousAssessments, setPreviousAssessments] = useState([]);
+    const [loadingAssessments, setLoadingAssessments] = useState(false);
     const [savingFile, setSavingFile] = useState(false);
+    const [lastActivityId, setLastActivityId] = useState(null);
     const fileInputRef = useRef(null);
 
     // Detect if we're using subjects or courses based on URL
@@ -51,8 +54,21 @@ const AssignmentWorkspace = () => {
             }
         };
 
+        const fetchAssessments = async () => {
+            setLoadingAssessments(true);
+            try {
+                const response = await api.get(`/api/activities/subject/${id}`);
+                setPreviousAssessments(response.data.data.activities);
+            } catch (error) {
+                console.error('Error fetching assessments:', error);
+            } finally {
+                setLoadingAssessments(false);
+            }
+        };
+
         if (id) {
             fetchAssignment();
+            fetchAssessments();
         }
     }, [id, apiEndpoint, itemKey, isSubjectMode, navigate]);
 
@@ -137,6 +153,11 @@ const AssignmentWorkspace = () => {
                 setGeneratedContent(response.data.data.generatedContent);
             }
 
+            if (response.data.data.activity) {
+                setPreviousAssessments(prev => [response.data.data.activity, ...prev]);
+                setLastActivityId(response.data.data.activity._id);
+            }
+
             // Simulate steps delay for visual effect if needed, or just set completed
             setTimeout(() => setStatus('completed'), 2000);
 
@@ -211,46 +232,15 @@ const AssignmentWorkspace = () => {
                                 {assignment ? `Configure automation for ${assignment.title}` : 'Configure and execute your assignment automation workflow.'}
                             </p>
                         </div>
-                        {status === 'completed' && (
+                        {status === 'completed' && lastActivityId && (
                             <button
                                 className="btn-primary"
-                                style={{ width: 'auto', background: '#10b981' }}
+                                style={{ width: 'auto', background: 'var(--primary)', borderColor: 'var(--primary)' }}
                                 onClick={() => {
-                                    // Generate formatted report
-                                    let reportText = `EduSaarthi Automation Report\n==========================\n\n`;
-                                    reportText += `Date: ${new Date().toLocaleString()}\n`;
-                                    reportText += `File: ${selectedFile?.name || selectedExistingFile?.originalName || 'Unknown'}\n`;
-                                    reportText += `Task: ${taskType === 'question_generation' ? 'Question Generation' : 'Quiz'}\n\n`;
-
-                                    reportText += `RESULTS\n-------\n\n`;
-
-                                    if (generatedContent.type === 'questions' && Array.isArray(generatedContent.data)) {
-                                        generatedContent.data.forEach(q => {
-                                            reportText += `${q}\n`;
-                                        });
-                                    } else if (generatedContent.type === 'quiz' && Array.isArray(generatedContent.data)) {
-                                        generatedContent.data.forEach((item, index) => {
-                                            reportText += `Q${index + 1}: ${item.question}\n`;
-                                            item.options.forEach((opt, i) => {
-                                                reportText += `   ${String.fromCharCode(65 + i)}) ${opt}\n`;
-                                            });
-                                            reportText += `   Correct Answer: ${item.answer}\n\n`;
-                                        });
-                                    } else {
-                                        reportText += JSON.stringify(generatedContent.data, null, 2);
-                                    }
-
-                                    reportText += `\n\nGenerated by EduSaarthi AI`;
-
-                                    const element = document.createElement("a");
-                                    const file = new Blob([reportText], { type: 'text/plain' });
-                                    element.href = URL.createObjectURL(file);
-                                    element.download = `automation-report-${Date.now()}.txt`;
-                                    document.body.appendChild(element);
-                                    element.click();
+                                    window.open(`/assessment/${lastActivityId}`, '_blank');
                                 }}
                             >
-                                <Download size={18} /> Download Package
+                                <Eye size={18} /> View Assessment
                             </button>
                         )}
                     </div>
@@ -338,7 +328,94 @@ const AssignmentWorkspace = () => {
                                     ))}
                                 </div>
 
+                            </div>
+                        )}
 
+                        {previousAssessments.length > 0 && (
+                            <div style={{ marginBottom: '2.5rem', marginTop: '2.5rem' }}>
+                                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <ClipboardList size={22} color="var(--primary)" />
+                                    Previously Generated Assessments
+                                </h3>
+                                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                    {previousAssessments.map((item) => (
+                                        <div
+                                            key={item._id}
+                                            onClick={() => {
+                                                setGeneratedContent(item.content);
+                                                setLastActivityId(item._id);
+                                                setStatus('completed');
+                                                window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll up to see results if they were at bottom
+                                            }}
+                                            style={{
+                                                padding: '1.25rem',
+                                                background: 'rgba(255,255,255,0.03)',
+                                                border: '1px solid var(--glass-border)',
+                                                borderRadius: '16px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '1.25rem'
+                                            }}
+                                            onMouseOver={(e) => {
+                                                e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.08)';
+                                                e.currentTarget.style.borderColor = 'var(--primary)';
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                            }}
+                                            onMouseOut={(e) => {
+                                                e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                                                e.currentTarget.style.borderColor = 'var(--glass-border)';
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '44px',
+                                                height: '44px',
+                                                borderRadius: '12px',
+                                                background: 'rgba(var(--primary-rgb), 0.15)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: 'var(--primary)'
+                                            }}>
+                                                <Sparkles size={20} />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '0.25rem' }}>
+                                                    {item.title}
+                                                </div>
+                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                    {new Date(item.createdAt).toLocaleDateString()} · {item.type === 'quiz' ? 'Quiz' : 'Questions'} · Based on {item.fileName}
+                                                </div>
+                                            </div>
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(`/assessment/${item._id}`, '_blank');
+                                                }}
+                                                style={{
+                                                    padding: '0.5rem',
+                                                    borderRadius: '8px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    color: 'var(--text-muted)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseOver={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.2)';
+                                                    e.currentTarget.style.color = 'var(--primary)';
+                                                }}
+                                                onMouseOut={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                                    e.currentTarget.style.color = 'var(--text-muted)';
+                                                }}
+                                            >
+                                                <Eye size={18} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
@@ -515,7 +592,7 @@ const AssignmentWorkspace = () => {
                             }}
                             disabled={status === 'processing' || (!selectedFile && !selectedExistingFile)}
                         >
-                            {status === 'processing' ? 'Processing Automation...' : 'Execute Full Automation'}
+                            {status === 'processing' ? 'Processing Assessment...' : 'Assessment'}
                             <ArrowRight size={20} />
                         </button>
 

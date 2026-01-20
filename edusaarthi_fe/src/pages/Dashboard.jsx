@@ -109,8 +109,11 @@ const Dashboard = () => {
                                 key={i}
                                 onClick={() => {
                                     setSelectedActivity(i);
-                                    // Navigate to courses/assignments for now as a default action
-                                    navigate('/subjects');
+                                    if (['question_generation', 'quiz', 'automation'].includes(activity.type)) {
+                                        window.open(`/assessment/${activity._id}`, '_blank');
+                                    } else {
+                                        navigate('/subjects');
+                                    }
                                 }}
                                 style={{
                                     padding: '1.5rem 2rem',

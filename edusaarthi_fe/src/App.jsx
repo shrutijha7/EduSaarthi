@@ -10,6 +10,7 @@ import CourseDetail from './pages/CourseDetail';
 import Settings from './pages/Settings';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ViewAssessment from './pages/ViewAssessment';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -92,6 +93,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/assessment/:id"
+            element={
+              <ProtectedRoute>
+                <ViewAssessment />
               </ProtectedRoute>
             }
           />

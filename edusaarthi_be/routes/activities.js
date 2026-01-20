@@ -100,7 +100,8 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
             description: activityDescription,
             fileName: originalName, // Store original file name
             filePath: filePath, // Store file path
-            type: taskType || 'automation'
+            type: taskType || 'automation',
+            content: generatedContent // Store the actual generated JSON
         });
 
         // 6. Send Email Notification if enabled
@@ -108,6 +109,42 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
             const emailHtml = formatEmailBody(activityTitle, generatedContent || { type: 'status', data: activityDescription }, originalName);
             await sendEmail(req.user.email, `Automation Complete: ${activityTitle}`, emailHtml);
         }
+
+        // Create results folder if it doesn't exist
+        const resultsDir = path.join(__dirname, '../results');
+        if (!fs.existsSync(resultsDir)) {
+            fs.mkdirSync(resultsDir, { recursive: true });
+        }
+
+        // Save generated results to a file (JSON)
+        const timestamp = Date.now();
+        const safeTitle = activityTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const resultFilenameJson = `result-${timestamp}-${safeTitle}.json`;
+        const resultFilenameTxt = `result-${timestamp}-${safeTitle}.txt`;
+
+        const resultPathJson = path.join(resultsDir, resultFilenameJson);
+        const resultPathTxt = path.join(resultsDir, resultFilenameTxt);
+
+        fs.writeFileSync(resultPathJson, JSON.stringify(generatedContent, null, 2));
+
+        // Generate a text version for easy reading
+        let textContent = `${activityTitle}\n${'='.repeat(activityTitle.length)}\n\n`;
+        textContent += `Source File: ${originalName}\n`;
+        textContent += `Date: ${new Date().toLocaleString()}\n\n`;
+
+        if (generatedContent.type === 'questions' && Array.isArray(generatedContent.data)) {
+            generatedContent.data.forEach((q, i) => textContent += `${i + 1}. ${q}\n`);
+        } else if (generatedContent.type === 'quiz' && Array.isArray(generatedContent.data)) {
+            generatedContent.data.forEach((item, i) => {
+                textContent += `Q${i + 1}: ${item.question}\n`;
+                item.options.forEach((opt, j) => textContent += `   ${String.fromCharCode(65 + j)}) ${opt}\n`);
+                textContent += `   Answer: ${item.answer}\n\n`;
+            });
+        }
+
+        fs.writeFileSync(resultPathTxt, textContent);
+
+        console.log(`Results saved to ${resultsDir}`);
 
         // Cleanup uploaded file if it was a new upload (not from subject)
         // Only delete if it's in the temporary uploads directory, not the subjects directory
@@ -245,6 +282,52 @@ router.get('/', protect, async (req, res) => {
         });
     } catch (err) {
         res.status(400).json({ status: 'fail', message: err.message });
+    }
+});
+
+// Get activities for a specific subject
+router.get('/subject/:subjectId', protect, async (req, res) => {
+    try {
+        const activities = await Activity.find({
+            userId: req.user._id,
+            subjectId: req.params.subjectId,
+            type: { $in: ['question_generation', 'quiz', 'automation'] } // Only return assessment/automation related
+        }).sort('-createdAt');
+
+        res.status(200).json({
+            status: 'success',
+            results: activities.length,
+            data: { activities }
+        });
+    } catch (err) {
+        res.status(400).json({ status: 'fail', message: err.message });
+    }
+});
+
+// Get a single activity by ID
+router.get('/:id', protect, async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ status: 'fail', message: 'Invalid Assessment ID format' });
+        }
+
+        const activity = await Activity.findOne({
+            _id: req.params.id,
+            userId: req.user._id
+        });
+
+        if (!activity) {
+            return res.status(404).json({ status: 'fail', message: 'Assessment not found or access denied' });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            data: { activity }
+        });
+    } catch (err) {
+        console.error('Error fetching activity:', err);
+        res.status(500).json({ status: 'error', message: err.message });
     }
 });
 

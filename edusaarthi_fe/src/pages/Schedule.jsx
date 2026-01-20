@@ -278,6 +278,15 @@ const Schedule = () => {
                                     </div>
                                     <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' }}>{allItems[selectedEvent].title}</h2>
                                     <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>{allItems[selectedEvent].description}</p>
+                                    {!allItems[selectedEvent].isScheduled && (
+                                        <button
+                                            onClick={() => window.open(`/assessment/${allItems[selectedEvent]._id}`, '_blank')}
+                                            className="btn-primary"
+                                            style={{ width: 'auto', marginTop: '1rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                                        >
+                                            View Full Report
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div style={{ display: 'grid', gap: '1rem' }}>
