@@ -1,0 +1,11 @@
+Generated Questions
+===================
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 21/1/2026, 6:50:00 pm
+
+1. Critically evaluate the architectural trade-offs between Complex Instruction Set Computing (CISC) and Reduced Instruction Set Computing (RISC) philosophies, specifically addressing the impact of each design choice on compiler optimization and pipeline efficiency.
+2. The memory hierarchy relies fundamentally on the principle of locality. Explain how virtual memory management, specifically through paging, leverages spatial and temporal locality to provide an illusion of larger, contiguous physical memory while mitigating fragmentation issues.
+3. Compare and contrast the flexibility, speed, and design complexity inherent in utilizing a micro-programmed control approach versus a hardwired control implementation for generating the necessary sequence of control signals within a Central Processing Unit.
+4. Analyze the system-level performance implications of using Direct Memory Access (DMA) compared to interrupt-driven or programmed Input/Output (I/O) methods, focusing on the efficiency concerning CPU utilization and data throughput for high-volume transfers.
+5. In a shared-memory multiprocessor system, explain the necessity of cache coherence protocols. Detail how a system suffering from coherence issues could lead to incorrect computational results, and outline the general mechanism used to maintain a consistent view of data across multiple private caches.

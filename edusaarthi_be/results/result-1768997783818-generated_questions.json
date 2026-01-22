@@ -1,0 +1,10 @@
+{
+  "type": "questions",
+  "data": [
+    "Contrast the architectural philosophy regarding complexity in instruction set design. Specifically, how does the typical instruction format and reliance on complex addressing modes in a CISC machine impact compiler design and pipeline efficiency compared to the fixed-length, load/store architecture of a RISC system?",
+    "Given the fundamental separation of program storage and data storage in the classic Von-Neumann model, analyze the inherent trade-offs between cost, latency, and throughput when designing bus structures to mitigate the performance bottleneck imposed by sequential instruction fetching and execution.",
+    "Evaluate the flexibility and performance implications of implementing the central control unit using micro-programming versus a hardwired approach. Under what specific conditions (e.g., frequent instruction set modifications or highly complex sequencing logic) does the use of Control Memory become the superior design choice?",
+    "Critically analyze the role of the principle of locality in the effective operation of a virtual memory system utilizing paging. Explain how the translation lookaside buffer (TLB) interacts with the cache hierarchy to maintain high performance despite the indirection introduced by the virtual addressing scheme.",
+    "When multiple processing units share a common main memory, explain the necessity of cache coherence protocols. Detail the challenges involved in maintaining data consistency across private caches and discuss the fundamental differences between directory-based and snooping mechanisms in achieving inter-processor synchronization."
+  ]
+}

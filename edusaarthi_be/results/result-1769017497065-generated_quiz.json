@@ -1,0 +1,50 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "Which hardware component is specifically designed to combine arithmetic, logic, and shift micro-operations into a single functional unit?",
+      "options": [
+        "Control Memory",
+        "Arithmetic Logic Shift Unit",
+        "Instruction Decoder",
+        "Program Counter"
+      ]
+    },
+    {
+      "question": "In virtual memory management, what mechanism is utilized to divide the logical address space into fixed-size blocks for mapping to physical memory?",
+      "options": [
+        "Segmentation",
+        "Interleaving",
+        "Paging",
+        "Cache Coherence"
+      ]
+    },
+    {
+      "question": "What input/output communication method allows peripherals to transfer data directly to or from main memory without continuous CPU intervention?",
+      "options": [
+        "Programmed I/O",
+        "Direct Memory Access (DMA)",
+        "Memory Mapped I/O",
+        "Status Register Polling"
+      ]
+    },
+    {
+      "question": "Which characteristic typically distinguishes a Reduced Instruction Set Computer (RISC) architecture from a Complex Instruction Set Computer (CISC) architecture?",
+      "options": [
+        "A large number of complex, variable-length instructions",
+        "Emphasis on micro-programmed control storage",
+        "A smaller, uniform instruction set optimized for pipelining",
+        "Direct execution of high-level language statements"
+      ]
+    },
+    {
+      "question": "What is the primary function of employing error detection and correction codes in computer systems?",
+      "options": [
+        "To increase the speed of the bus structure",
+        "To manage the memory hierarchy layout",
+        "To ensure data integrity during storage and transmission",
+        "To facilitate floating-point arithmetic operations"
+      ]
+    }
+  ]
+}

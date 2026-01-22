@@ -1,0 +1,48 @@
+Generated Quiz
+==============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 21/1/2026, 6:32:36 pm
+
+Q1: What is the defining characteristic of the Von-Neumann architecture regarding program instructions and data?
+   A) Instructions and data share a single address space and bus.
+   B) Instructions are stored in ROM while data is stored in RAM.
+   C) Separate buses are used for memory access and I/O transfers.
+   D) A dedicated control bus manages only instruction fetching.
+
+Q2: Which technique is used in data representation to ensure integrity during transmission or storage by appending redundant bits?
+   A) Fixed-point normalization
+   B) Floating-point rounding
+   C) Error detection and correction codes
+   D) Decimal arithmetic operations
+
+Q3: Which hardware unit is specifically designed to combine arithmetic, logic, and shift micro-operations?
+   A) Control Memory Sequencer
+   B) Instruction Register Stack
+   C) Arithmetic logic shift unit
+   D) Memory Address Register
+
+Q4: Which characteristic primarily distinguishes a Complex Instruction Set Computer (CISC) architecture?
+   A) It relies exclusively on hardwired control logic.
+   B) Instructions are generally fixed in length and execute in one clock cycle.
+   C) It utilizes a load/store architecture for all memory operations.
+   D) Instructions often execute complex tasks with a single instruction.
+
+Q5: In a system utilizing virtual memory, what mechanism translates virtual addresses into physical addresses, typically involving a dedicated table structure?
+   A) Cache line mapping
+   B) RAID configuration
+   C) Memory banking
+   D) Paging
+
+Q6: What concept ensures that all copies of a shared data block residing in different local caches across a multiprocessor system remain consistent?
+   A) Inter Processor Arbitration
+   B) Bus Structure Synchronization
+   C) Cache Coherence
+   D) Register Transfer Language
+
+Q7: Which I/O communication technique allows peripherals to transfer data directly to or from main memory without continuous CPU intervention?
+   A) Programmed I/O
+   B) Interrupt Driven I/O
+   C) Memory Mapped I/O
+   D) Direct Memory Access (DMA)
+

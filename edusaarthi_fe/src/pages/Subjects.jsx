@@ -24,7 +24,7 @@ const Subjects = () => {
     const [showEditModal, setShowEditModal] = React.useState(false);
     const [showBatchModal, setShowBatchModal] = React.useState(false);
     const [showEditBatchModal, setShowEditBatchModal] = React.useState(false);
-    const [editItem, setEditItem] = React.useState({ id: '', title: '' });
+    const [editItem, setEditItem] = React.useState({ id: '', title: '', batches: [] });
     const [newItem, setNewItem] = React.useState({ title: '', files: [], selectedBatches: [] });
     const [newBatch, setNewBatch] = React.useState({ name: '', description: '', students: [] });
     const [editingBatch, setEditingBatch] = React.useState(null);
@@ -238,7 +238,8 @@ const Subjects = () => {
         e.stopPropagation();
         setEditItem({
             id: subject._id,
-            title: subject.title
+            title: subject.title,
+            batches: subject.batches?.map(b => b._id || b) || []
         });
         setShowEditModal(true);
     };
@@ -248,7 +249,8 @@ const Subjects = () => {
         try {
             const token = localStorage.getItem('token');
             const response = await api.patch(`/api/subjects/${editItem.id}`, {
-                title: editItem.title
+                title: editItem.title,
+                batches: editItem.batches
             });
 
             if (response.data && response.data.data && response.data.data.subject) {
@@ -290,7 +292,7 @@ const Subjects = () => {
                     </div>
 
                     {/* Batch Management Panel at top left */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)', overflowX: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: '600', minWidth: 'fit-content' }}>
                             <Users size={20} />
                             <span>Batches:</span>
@@ -332,34 +334,9 @@ const Subjects = () => {
                                         }}
                                     >
                                         {batch.name}
-                                        <div
-                                            onClick={(e) => handleEditBatchClick(e, batch)}
-                                            style={{ display: 'flex', alignItems: 'center', opacity: 0.6 }}
-                                            title="Edit Batch"
-                                        >
-                                            <Edit3 size={12} />
-                                        </div>
                                     </button>
                                 </div>
                             ))}
-                            <button
-                                onClick={() => setShowBatchModal(true)}
-                                style={{
-                                    padding: '0.4rem 1rem',
-                                    borderRadius: '20px',
-                                    background: 'transparent',
-                                    color: 'var(--primary)',
-                                    border: '1px dashed var(--primary)',
-                                    cursor: 'pointer',
-                                    fontSize: '0.875rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.25rem',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                <Plus size={14} /> New Batch
-                            </button>
                         </div>
                     </div>
                 </header>
@@ -384,7 +361,7 @@ const Subjects = () => {
                         display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
                         overflow: 'auto', padding: '2rem'
                     }}>
-                        <div className="glass-card" style={{ width: '600px', maxWidth: '90%', maxHeight: '90vh', overflow: 'auto' }}>
+                        <div className="glass-card" style={{ width: '600px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                                 <h2 style={{ fontSize: '1.5rem' }}>Create New Subject</h2>
                                 <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
@@ -472,7 +449,7 @@ const Subjects = () => {
                                             <Plus size={14} /> Create New Batch
                                         </button>
                                     </div>
-                                    <div style={{ maxHeight: '150px', overflow: 'auto', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                                    <div style={{ maxHeight: '150px', overflowY: 'auto', overflowX: 'hidden', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
                                         {batches.length === 0 ? (
                                             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No batches available. Create one!</p>
                                         ) : (
@@ -532,6 +509,44 @@ const Subjects = () => {
                                         autoFocus
                                     />
                                 </div>
+
+                                {/* Batch Selection in Edit Modal */}
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                                        <Users size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                                        Associated Batches
+                                    </label>
+                                    <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                                        {batches.length === 0 ? (
+                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No batches available.</p>
+                                        ) : (
+                                            batches.map(batch => (
+                                                <label
+                                                    key={batch._id}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', cursor: 'pointer', borderRadius: '6px', transition: 'background 0.2s' }}
+                                                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(var(--primary-rgb), 0.1)'}
+                                                    onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editItem.batches.includes(batch._id)}
+                                                        onChange={() => {
+                                                            const isSelected = editItem.batches.includes(batch._id);
+                                                            const updatedBatches = isSelected
+                                                                ? editItem.batches.filter(id => id !== batch._id)
+                                                                : [...editItem.batches, batch._id];
+                                                            setEditItem({ ...editItem, batches: updatedBatches });
+                                                        }}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                    <div>
+                                                        <div style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>{batch.name}</div>
+                                                    </div>
+                                                </label>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
                                 <button type="submit" className="btn-primary">Update Subject</button>
                             </form>
                         </div>
@@ -546,7 +561,7 @@ const Subjects = () => {
                         display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1001,
                         overflow: 'auto', padding: '2rem'
                     }}>
-                        <div className="glass-card" style={{ width: '600px', maxWidth: '90%', maxHeight: '90vh', overflow: 'auto' }}>
+                        <div className="glass-card" style={{ width: '600px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                                 <h2 style={{ fontSize: '1.5rem' }}>Create New Batch</h2>
                                 <button onClick={() => setShowBatchModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
@@ -581,7 +596,7 @@ const Subjects = () => {
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                                     Add Students
                                 </label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px auto', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
                                     <input
                                         type="text"
                                         placeholder="Name"
@@ -624,7 +639,7 @@ const Subjects = () => {
 
                                 {/* Students List */}
                                 {newBatch.students.length > 0 && (
-                                    <div style={{ maxHeight: '200px', overflow: 'auto', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                                    <div style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'hidden', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
                                         {newBatch.students.map((student, index) => (
                                             <div
                                                 key={index}
@@ -822,7 +837,7 @@ const Subjects = () => {
                     </div>
                 )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
                     {subjects.filter(s => {
                         const q = searchParams.get('q')?.toLowerCase() || '';
                         const matchesSearch = s.title.toLowerCase().includes(q);
@@ -842,14 +857,14 @@ const Subjects = () => {
                                 cursor: 'pointer'
                             }}
                         >
-                            <div style={{ position: 'relative', height: '180px', overflow: 'hidden' }}>
+                            <div style={{ position: 'relative', height: '140px', overflow: 'hidden' }}>
                                 <img
                                     src={subject.image}
                                     alt={subject.title}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
-                                <div style={{ position: 'absolute', top: '1rem', left: '1rem' }}>
-                                    <span className="tag" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', color: 'white', border: 'none' }}>
+                                <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem' }}>
+                                    <span className="tag" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', color: 'white', border: 'none', fontSize: '0.7rem' }}>
                                         {subject.category}
                                     </span>
                                 </div>

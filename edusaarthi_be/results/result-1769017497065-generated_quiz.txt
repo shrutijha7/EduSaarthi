@@ -1,0 +1,36 @@
+Generated Quiz
+==============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 21/1/2026, 11:14:57 pm
+
+Q1: Which hardware component is specifically designed to combine arithmetic, logic, and shift micro-operations into a single functional unit?
+   A) Control Memory
+   B) Arithmetic Logic Shift Unit
+   C) Instruction Decoder
+   D) Program Counter
+
+Q2: In virtual memory management, what mechanism is utilized to divide the logical address space into fixed-size blocks for mapping to physical memory?
+   A) Segmentation
+   B) Interleaving
+   C) Paging
+   D) Cache Coherence
+
+Q3: What input/output communication method allows peripherals to transfer data directly to or from main memory without continuous CPU intervention?
+   A) Programmed I/O
+   B) Direct Memory Access (DMA)
+   C) Memory Mapped I/O
+   D) Status Register Polling
+
+Q4: Which characteristic typically distinguishes a Reduced Instruction Set Computer (RISC) architecture from a Complex Instruction Set Computer (CISC) architecture?
+   A) A large number of complex, variable-length instructions
+   B) Emphasis on micro-programmed control storage
+   C) A smaller, uniform instruction set optimized for pipelining
+   D) Direct execution of high-level language statements
+
+Q5: What is the primary function of employing error detection and correction codes in computer systems?
+   A) To increase the speed of the bus structure
+   B) To manage the memory hierarchy layout
+   C) To ensure data integrity during storage and transmission
+   D) To facilitate floating-point arithmetic operations
+

@@ -94,7 +94,6 @@ const Layout = ({ children }) => {
                         <Clock size={20} />
                         <span>History</span>
                     </NavLink>
-
                 </nav>
 
                 <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1.5rem', borderTop: '1px solid var(--glass-border)' }}>

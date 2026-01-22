@@ -1,0 +1,15 @@
+{
+  "type": "questions",
+  "data": [
+    "Analyze the inherent throughput bottleneck created by the unified address and data space in the Von-Neumann model, and discuss how modern architectures mitigate this constraint to enhance parallel execution.",
+    "Explain the trade-offs between magnitude range and precision when implementing the IEEE 754 standard for floating-point arithmetic, detailing the logical steps required for normalization during addition or subtraction.",
+    "Contrast the architectural philosophy of Complex Instruction Set Computing (CISC) versus Reduced Instruction Set Computing (RISC) in terms of instruction decoding complexity, register utilization, and suitability for deep pipelined execution.",
+    "Justify the necessity of multiple addressing modes within an instruction set architecture, explaining how advanced modes (e.g., indexed or relative) facilitate efficient stack management and support complex data structure manipulation.",
+    "Detail the logical structure required to integrate arithmetic, logic, and shift micro-operations into a single, efficient hardware component, focusing on the role of selection circuitry and control signals.",
+    "Discuss the advantages and disadvantages of implementing the control unit using micro-programming versus hardwired control, particularly concerning system flexibility, design complexity, and instruction execution speed.",
+    "Critically evaluate the impact of different cache mapping techniques (direct, associative, set-associative) on the hit ratio and overall system performance, considering the overhead associated with replacement policies.",
+    "Describe the mechanism of demand paging within a virtual memory system, and analyze the potential performance degradation caused by a high page fault rate, including the concept of thrashing.",
+    "Under what operational conditions is Direct Memory Access (DMA) significantly more advantageous than interrupt-driven I/O, and what are the essential hardware components required for DMA transfer initiation and completion?",
+    "In a shared-memory multiprocessor system, explain the necessity of cache coherence protocols, illustrating how a common snooping protocol maintains data consistency across multiple processing elements."
+  ]
+}

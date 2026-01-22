@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Save, Eye, ClipboardList, ChevronDown, ChevronUp, X, Users } from 'lucide-react';
+import { ChevronLeft, FileUp, Sparkles, Download, ArrowRight, ShieldCheck, Zap, Save, Eye, ClipboardList, ChevronDown, ChevronUp, X, Users, Plus, Edit3, Trash2 } from 'lucide-react';
 
 import api, { API_BASE_URL } from '../utils/api';
 
@@ -28,6 +28,11 @@ const AssignmentWorkspace = () => {
     const [emailDraft, setEmailDraft] = useState({ subject: '', body: '', recipients: [] });
     const [sendingEmail, setSendingEmail] = useState(false);
     const [showPreviousAssessments, setShowPreviousAssessments] = useState(true);
+    const [showBatchModal, setShowBatchModal] = useState(false);
+    const [showEditBatchModal, setShowEditBatchModal] = useState(false);
+    const [newBatch, setNewBatch] = useState({ name: '', description: '', students: [] });
+    const [editingBatch, setEditingBatch] = useState(null);
+    const [studentInput, setStudentInput] = useState({ name: '', email: '', rollNumber: '' });
     const fileInputRef = useRef(null);
 
     // Detect if we're using subjects or courses based on URL
@@ -76,12 +81,20 @@ const AssignmentWorkspace = () => {
             try {
                 const response = await api.get('/api/batches');
                 setBatches(response.data.data.batches || []);
-                // If subject has batches, prefer those or select first available
-                if (isSubjectMode && assignment?.batches && assignment.batches.length > 0) {
-                    setSelectedBatchId(assignment.batches[0]);
-                } else if (response.data.data.batches?.length > 0) {
-                    setSelectedBatchId(response.data.data.batches[0]._id);
-                }
+
+                // Only auto-select if no batch is currently selected
+                setSelectedBatchId(currentId => {
+                    if (currentId) return currentId;
+
+                    // If subject has batches, prefer those or select first available
+                    if (isSubjectMode && assignment?.batches && assignment.batches.length > 0) {
+                        const firstBatch = assignment.batches[0];
+                        return firstBatch._id || firstBatch;
+                    } else if (response.data.data.batches?.length > 0) {
+                        return response.data.data.batches[0]._id;
+                    }
+                    return currentId;
+                });
             } catch (error) {
                 console.error('Error fetching batches:', error);
             }
@@ -150,6 +163,8 @@ const AssignmentWorkspace = () => {
         }
 
         setStatus('processing');
+        setShowEmailModal(false); // Hide any previous email review
+        setGeneratedContent(null);
 
         try {
             const formData = new FormData();
@@ -210,7 +225,7 @@ const AssignmentWorkspace = () => {
             body += `A quiz is ready for you with ${generatedContent.data.length} questions.\n\n`;
         }
 
-        body += `\nYou can view the full details in your student portal.\n\nBest regards,\nEduSaarthi AI`;
+        body += `\n\nBest regards,\nEduSaarthi AI`;
 
         setEmailDraft({
             subject,
@@ -222,20 +237,96 @@ const AssignmentWorkspace = () => {
 
     const handleSendEmail = async () => {
         setSendingEmail(true);
+        let emailsSent = false;
+
         try {
+            // 1. Send the manual email notification
             await api.post('/api/activities/send-manual', {
                 recipientEmail: emailDraft.recipients.join(','),
                 title: emailDraft.subject,
                 content: generatedContent,
                 fileName: selectedExistingFile?.originalName || selectedFile?.name || 'Course Material'
             });
+            emailsSent = true;
+
             alert('Emails sent successfully!');
             setShowEmailModal(false);
         } catch (error) {
             console.error('Error sending email:', error);
-            alert('Failed to send emails: ' + (error.response?.data?.message || error.message));
+            const errorMessage = error.response?.data?.message || error.message;
+            if (emailsSent) {
+                alert('Emails were sent, but there was an issue linking the assignment to the student dashboard.');
+                setShowEmailModal(false);
+            } else {
+                alert('Failed to send emails: ' + errorMessage);
+            }
         } finally {
             setSendingEmail(false);
+        }
+    };
+    const handleAddStudent = () => {
+        if (studentInput.name && studentInput.email) {
+            if (showEditBatchModal) {
+                setEditingBatch({
+                    ...editingBatch,
+                    students: [...editingBatch.students, { ...studentInput }]
+                });
+            } else {
+                setNewBatch({
+                    ...newBatch,
+                    students: [...newBatch.students, { ...studentInput }]
+                });
+            }
+            setStudentInput({ name: '', email: '', rollNumber: '' });
+        }
+    };
+
+    const handleCreateBatch = async () => {
+        try {
+            const response = await api.post('/api/batches', newBatch);
+            const createdBatch = response.data.data.batch;
+            setBatches([...batches, createdBatch]);
+            setSelectedBatchId(createdBatch._id);
+            setShowBatchModal(false);
+            setNewBatch({ name: '', description: '', students: [] });
+        } catch (error) {
+            console.error('Error creating batch:', error);
+            alert('Failed to create batch: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleEditBatchClick = (e) => {
+        if (!selectedBatchId) return;
+        const batch = batches.find(b => b._id === selectedBatchId);
+        if (batch) {
+            setEditingBatch({ ...batch });
+            setShowEditBatchModal(true);
+        }
+    };
+
+    const handleUpdateBatch = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await api.patch(`/api/batches/${editingBatch._id}`, editingBatch);
+            const updatedBatch = response.data.data.batch;
+            setBatches(prev => prev.map(b => b._id === updatedBatch._id ? updatedBatch : b));
+            setShowEditBatchModal(false);
+            setEditingBatch(null);
+        } catch (error) {
+            console.error('Error updating batch:', error);
+            alert('Failed to update batch: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleDeleteBatch = async (e, id) => {
+        if (!window.confirm('Are you sure you want to delete this batch?')) return;
+        try {
+            await api.delete(`/api/batches/${id}`);
+            setBatches(prev => prev.filter(b => b._id !== id));
+            setSelectedBatchId('');
+            setShowEditBatchModal(false);
+        } catch (error) {
+            console.error('Error deleting batch:', error);
         }
     };
 
@@ -477,9 +568,30 @@ const AssignmentWorkspace = () => {
                         <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                 <div>
-                                    <h4 style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Users size={18} color="var(--primary)" /> Recipient Batch
-                                    </h4>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <h4 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                                            <Users size={18} color="var(--primary)" /> Recipient Batch
+                                        </h4>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            {selectedBatchId && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleEditBatchClick}
+                                                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
+                                                    title="Edit Selected Batch"
+                                                >
+                                                    <Edit3 size={14} /> Edit
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowBatchModal(true)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem' }}
+                                            >
+                                                <Plus size={14} /> New Batch
+                                            </button>
+                                        </div>
+                                    </div>
                                     <select
                                         value={selectedBatchId}
                                         onChange={(e) => setSelectedBatchId(e.target.value)}
@@ -594,7 +706,7 @@ const AssignmentWorkspace = () => {
                             }}
                             disabled={status === 'processing' || (!selectedFile && !selectedExistingFile)}
                         >
-                            {status === 'processing' ? 'Processing Assessment...' : 'Assessment'}
+                            {status === 'processing' ? 'Processing Assessment...' : 'Generate Assessment'}
                             <ArrowRight size={20} />
                         </button>
 
@@ -605,10 +717,30 @@ const AssignmentWorkspace = () => {
 
                                 {generatedContent.type === 'questions' && (
                                     <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
-                                        <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Generated Questions</h3>
-                                        <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-main)', lineHeight: '1.8' }}>
+                                        <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Generated Questions (Editable)</h3>
+                                        <ul style={{ paddingLeft: '0', listStyle: 'none', color: 'var(--text-main)', lineHeight: '1.8' }}>
                                             {generatedContent.data.map((q, idx) => (
-                                                <li key={idx} style={{ marginBottom: '0.5rem' }}>{q}</li>
+                                                <li key={idx} style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                                    <span style={{ paddingTop: '0.7rem', color: 'var(--primary)', fontWeight: 'bold' }}>{idx + 1}.</span>
+                                                    <textarea
+                                                        value={q}
+                                                        onChange={(e) => {
+                                                            const newQuestions = [...generatedContent.data];
+                                                            newQuestions[idx] = e.target.value;
+                                                            setGeneratedContent({ ...generatedContent, data: newQuestions });
+                                                        }}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '0.75rem',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid var(--glass-border)',
+                                                            background: 'rgba(0,0,0,0.2)',
+                                                            color: 'white',
+                                                            resize: 'vertical',
+                                                            minHeight: '60px'
+                                                        }}
+                                                    />
+                                                </li>
                                             ))}
                                         </ul>
                                     </div>
@@ -616,27 +748,53 @@ const AssignmentWorkspace = () => {
 
                                 {generatedContent.type === 'quiz' && (
                                     <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
-                                        <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Generated Quiz</h3>
+                                        <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Generated Quiz (Editable)</h3>
                                         <div style={{ display: 'grid', gap: '2rem' }}>
                                             {generatedContent.data.map((item, idx) => (
                                                 <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                                                    <div style={{ fontWeight: '600', marginBottom: '1rem', fontSize: '1.1rem' }}>
-                                                        {idx + 1}. {item.question}
+                                                    <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                        <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>Q{idx + 1}.</span>
+                                                        <input
+                                                            type="text"
+                                                            value={item.question}
+                                                            onChange={(e) => {
+                                                                const newQuiz = [...generatedContent.data];
+                                                                newQuiz[idx].question = e.target.value;
+                                                                setGeneratedContent({ ...generatedContent, data: newQuiz });
+                                                            }}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '0.5rem',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid var(--glass-border)',
+                                                                background: 'rgba(0,0,0,0.2)',
+                                                                color: 'white',
+                                                                fontWeight: '600'
+                                                            }}
+                                                        />
                                                     </div>
                                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                                                         {item.options.map((opt, optIdx) => (
-                                                            <div
-                                                                key={optIdx}
-                                                                style={{
-                                                                    padding: '0.75rem 1rem',
-                                                                    background: 'rgba(0,0,0,0.2)',
-                                                                    border: '1px solid var(--glass-border)',
-                                                                    borderRadius: '8px',
-                                                                    fontSize: '0.9rem',
-                                                                    color: 'var(--text-main)'
-                                                                }}
-                                                            >
-                                                                {String.fromCharCode(65 + optIdx)}. {opt}
+                                                            <div key={optIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', width: '20px' }}>{String.fromCharCode(65 + optIdx)}.</span>
+                                                                <input
+                                                                    type="text"
+                                                                    value={opt}
+                                                                    onChange={(e) => {
+                                                                        const newQuiz = [...generatedContent.data];
+                                                                        newQuiz[idx].options[optIdx] = e.target.value;
+                                                                        setGeneratedContent({ ...generatedContent, data: newQuiz });
+                                                                    }}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        padding: '0.5rem',
+                                                                        borderRadius: '6px',
+                                                                        border: '1px solid var(--glass-border)',
+                                                                        background: 'rgba(0,0,0,0.2)',
+                                                                        color: 'var(--text-main)',
+                                                                        fontSize: '0.9rem'
+                                                                    }}
+                                                                />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -659,66 +817,345 @@ const AssignmentWorkspace = () => {
                                     <button
                                         className="btn-primary"
                                         style={{ width: 'auto' }}
-                                        onClick={() => { setStatus('idle'); setGeneratedContent(null); setSelectedFile(null); }}
+                                        onClick={() => { setStatus('idle'); setGeneratedContent(null); setSelectedFile(null); setShowEmailModal(false); }}
                                     >
                                         Run Another Task
+                                    </button>
+                                </div>
+
+                                {/* Email Review Section - Now Inline */}
+                                {showEmailModal && (
+                                    <div style={{
+                                        marginTop: '2rem',
+                                        animation: 'fadeIn 0.5s ease-out',
+                                        background: 'rgba(255,255,255,0.02)',
+                                        border: '1px solid var(--glass-border)',
+                                        borderRadius: '16px',
+                                        padding: '2rem'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                            <h2 style={{ fontSize: '1.5rem', color: 'var(--primary)' }}>Review & Edit Email</h2>
+                                            <button onClick={() => setShowEmailModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                                                <X size={24} />
+                                            </button>
+                                        </div>
+
+                                        <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>To:</div>
+                                            <div style={{ fontSize: '0.9rem', maxHeight: '60px', overflowY: 'auto' }}>
+                                                {emailDraft.recipients.join(', ')}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ marginBottom: '1.5rem' }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Subject</label>
+                                            <input
+                                                type="text"
+                                                value={emailDraft.subject}
+                                                onChange={(e) => setEmailDraft({ ...emailDraft, subject: e.target.value })}
+                                                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                            />
+                                        </div>
+
+                                        <div style={{ marginBottom: '2rem' }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Message Body</label>
+                                            <textarea
+                                                value={emailDraft.body}
+                                                onChange={(e) => setEmailDraft({ ...emailDraft, body: e.target.value })}
+                                                style={{ width: '100%', height: '250px', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white', resize: 'vertical' }}
+                                            />
+                                        </div>
+
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                                            <button onClick={() => setShowEmailModal(false)} className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--glass-border)', width: 'auto' }}>Cancel</button>
+                                            <button
+                                                onClick={handleSendEmail}
+                                                className="btn-primary"
+                                                style={{ width: 'auto', background: 'var(--primary)' }}
+                                                disabled={sendingEmail}
+                                            >
+                                                {sendingEmail ? 'Sending...' : 'Send Emails Now'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+
+
+                        {/* Batch Creation Modal */}
+                        {showBatchModal && (
+                            <div style={{
+                                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                                background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
+                                display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1001,
+                                overflow: 'auto', padding: '2rem'
+                            }}>
+                                <div className="glass-card" style={{ width: '600px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                        <h2 style={{ fontSize: '1.5rem' }}>Create New Batch</h2>
+                                        <button onClick={() => setShowBatchModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Batch Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                            value={newBatch.name}
+                                            onChange={e => setNewBatch({ ...newBatch, name: e.target.value })}
+                                            placeholder="e.g. Class 10A"
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Description (Optional)</label>
+                                        <textarea
+                                            style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white', minHeight: '60px', resize: 'vertical' }}
+                                            value={newBatch.description}
+                                            onChange={e => setNewBatch({ ...newBatch, description: e.target.value })}
+                                            placeholder="Brief description of this batch"
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                                            Add Students
+                                        </label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Name"
+                                                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                                value={studentInput.name}
+                                                onChange={e => setStudentInput({ ...studentInput, name: e.target.value })}
+                                            />
+                                            <input
+                                                type="email"
+                                                placeholder="Email"
+                                                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                                value={studentInput.email}
+                                                onChange={e => setStudentInput({ ...studentInput, email: e.target.value })}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Roll #"
+                                                style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                                value={studentInput.rollNumber}
+                                                onChange={e => setStudentInput({ ...studentInput, rollNumber: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddStudent}
+                                                style={{
+                                                    background: 'var(--primary)',
+                                                    border: 'none',
+                                                    color: 'white',
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    padding: '0.75rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <Plus size={18} />
+                                            </button>
+                                        </div>
+
+                                        {/* Students List */}
+                                        {newBatch.students.length > 0 && (
+                                            <div style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'hidden', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                                                {newBatch.students.map((student, index) => (
+                                                    <div
+                                                        key={index}
+                                                        style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            padding: '0.5rem',
+                                                            background: 'rgba(0,0,0,0.3)',
+                                                            borderRadius: '6px',
+                                                            marginBottom: '0.5rem'
+                                                        }}
+                                                    >
+                                                        <div>
+                                                            <div style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>
+                                                                {student.name} {student.rollNumber && `(${student.rollNumber})`}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                                {student.email}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const updatedStudents = newBatch.students.filter((_, i) => i !== index);
+                                                                setNewBatch({ ...newBatch, students: updatedStudents });
+                                                            }}
+                                                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="btn-primary"
+                                        onClick={handleCreateBatch}
+                                        disabled={!newBatch.name || newBatch.students.length === 0}
+                                        style={{ opacity: (!newBatch.name || newBatch.students.length === 0) ? 0.5 : 1 }}
+                                    >
+                                        Create Batch
                                     </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* Email Review Modal */}
-                        {showEmailModal && (
+                        {/* Edit Batch Modal */}
+                        {showEditBatchModal && editingBatch && (
                             <div style={{
                                 position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
                                 background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(5px)',
-                                display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+                                display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1001,
+                                overflow: 'auto', padding: '2rem'
                             }}>
-                                <div className="glass-card" style={{ width: '700px', maxWidth: '90%', maxHeight: '90vh', overflow: 'auto' }}>
+                                <div className="glass-card" style={{ width: '600px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                                        <h2 style={{ fontSize: '1.5rem' }}>Review & Edit Email</h2>
-                                        <button onClick={() => setShowEmailModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+                                        <h2 style={{ fontSize: '1.5rem' }}>Edit Batch: {editingBatch.name}</h2>
+                                        <button onClick={() => setShowEditBatchModal(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
                                             <X size={24} />
                                         </button>
                                     </div>
 
-                                    <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>To:</div>
-                                        <div style={{ fontSize: '0.9rem', maxHeight: '60px', overflowY: 'auto' }}>
-                                            {emailDraft.recipients.join(', ')}
+                                    <form onSubmit={handleUpdateBatch}>
+                                        <div style={{ marginBottom: '1.5rem' }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Batch Name</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                                value={editingBatch.name}
+                                                onChange={e => setEditingBatch({ ...editingBatch, name: e.target.value })}
+                                                placeholder="e.g. Class 10A"
+                                            />
                                         </div>
-                                    </div>
 
-                                    <div style={{ marginBottom: '1.5rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Subject</label>
-                                        <input
-                                            type="text"
-                                            value={emailDraft.subject}
-                                            onChange={(e) => setEmailDraft({ ...emailDraft, subject: e.target.value })}
-                                            style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
-                                        />
-                                    </div>
+                                        <div style={{ marginBottom: '1.5rem' }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Description (Optional)</label>
+                                            <textarea
+                                                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white', minHeight: '60px', resize: 'vertical' }}
+                                                value={editingBatch.description}
+                                                onChange={e => setEditingBatch({ ...editingBatch, description: e.target.value })}
+                                                placeholder="Brief description of this batch"
+                                            />
+                                        </div>
 
-                                    <div style={{ marginBottom: '2rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Message Body</label>
-                                        <textarea
-                                            value={emailDraft.body}
-                                            onChange={(e) => setEmailDraft({ ...emailDraft, body: e.target.value })}
-                                            style={{ width: '100%', height: '250px', padding: '1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white', resize: 'vertical' }}
-                                        />
-                                    </div>
+                                        <div style={{ marginBottom: '1.5rem' }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                                                Students
+                                            </label>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Name"
+                                                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                                    value={studentInput.name}
+                                                    onChange={e => setStudentInput({ ...studentInput, name: e.target.value })}
+                                                />
+                                                <input
+                                                    type="email"
+                                                    placeholder="Email"
+                                                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                                    value={studentInput.email}
+                                                    onChange={e => setStudentInput({ ...studentInput, email: e.target.value })}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Roll #"
+                                                    style={{ padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
+                                                    value={studentInput.rollNumber}
+                                                    onChange={e => setStudentInput({ ...studentInput, rollNumber: e.target.value })}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddStudent}
+                                                    style={{
+                                                        background: 'var(--primary)',
+                                                        border: 'none',
+                                                        color: 'white',
+                                                        borderRadius: '8px',
+                                                        cursor: 'pointer',
+                                                        padding: '0.75rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    <Plus size={18} />
+                                                </button>
+                                            </div>
 
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                                        <button onClick={() => setShowEmailModal(false)} className="btn-primary" style={{ background: 'transparent', width: 'auto' }}>Cancel</button>
-                                        <button
-                                            onClick={handleSendEmail}
-                                            className="btn-primary"
-                                            style={{ width: 'auto', background: 'var(--primary)' }}
-                                            disabled={sendingEmail}
-                                        >
-                                            {sendingEmail ? 'Sending...' : 'Send Emails Now'}
-                                        </button>
-                                    </div>
+                                            {/* Students List */}
+                                            {editingBatch.students.length > 0 && (
+                                                <div style={{ maxHeight: '200px', overflowY: 'auto', overflowX: 'hidden', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '0.5rem', background: 'rgba(0,0,0,0.2)' }}>
+                                                    {editingBatch.students.map((student, index) => (
+                                                        <div
+                                                            key={index}
+                                                            style={{
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                padding: '0.5rem',
+                                                                background: 'rgba(0,0,0,0.3)',
+                                                                borderRadius: '6px',
+                                                                marginBottom: '0.5rem'
+                                                            }}
+                                                        >
+                                                            <div>
+                                                                <div style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>
+                                                                    {student.name} {student.rollNumber && `(${student.rollNumber})`}
+                                                                </div>
+                                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                                    {student.email}
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const updatedStudents = editingBatch.students.filter((_, i) => i !== index);
+                                                                    setEditingBatch({ ...editingBatch, students: updatedStudents });
+                                                                }}
+                                                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleDeleteBatch(e, editingBatch._id)}
+                                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.875rem' }}
+                                            >
+                                                Delete Batch
+                                            </button>
+                                            <button type="submit" className="btn-primary" style={{ width: 'auto' }}>Update Batch</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         )}

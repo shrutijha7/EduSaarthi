@@ -1,0 +1,10 @@
+{
+  "type": "questions",
+  "data": [
+    "Analyze the architectural trade-offs between Complex Instruction Set Computing (CISC) and Reduced Instruction Set Computing (RISC), specifically focusing on how instruction density and micro-programmed control complexity impact pipeline design efficiency.",
+    "In a shared-memory multiprocessor system, explain the necessity of cache coherence protocols. Detail the mechanism by which a snooping protocol ensures data consistency when multiple processors attempt to modify the same block of memory simultaneously.",
+    "Discuss the role of paging in virtual memory management, explaining how translation lookaside buffers (TLBs) mitigate the performance overhead associated with mapping virtual addresses to physical memory locations.",
+    "Explain the inherent design challenges in implementing a purely hardwired control unit for a complex instruction set, and detail how micro-programmed control provides a more flexible and structured solution for instruction execution sequencing.",
+    "Contrast Direct Memory Access (DMA) with Programmed I/O in terms of CPU utilization and throughput for high-volume data transfers. Under what circumstances would an Interrupt Driven I/O approach be preferred over DMA?"
+  ]
+}

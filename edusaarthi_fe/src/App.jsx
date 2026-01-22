@@ -35,6 +35,15 @@ const CourseRedirect = () => {
   return <Navigate to={`/subjects/${id}`} replace />;
 };
 
+const RootRedirect = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" />;
+
+  return <Navigate to="/dashboard" replace />;
+};
+
 const App = () => {
   React.useEffect(() => {
     const savedColor = localStorage.getItem('themeColor');
@@ -104,7 +113,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/" element={<RootRedirect />} />
         </Routes>
       </AuthProvider>
     </Router>

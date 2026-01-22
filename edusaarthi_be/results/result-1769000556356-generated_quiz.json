@@ -1,0 +1,68 @@
+{
+  "type": "quiz",
+  "data": [
+    {
+      "question": "What is the defining characteristic of the Von-Neumann architecture regarding program instructions and data?",
+      "options": [
+        "Instructions and data share a single address space and bus.",
+        "Instructions are stored in ROM while data is stored in RAM.",
+        "Separate buses are used for memory access and I/O transfers.",
+        "A dedicated control bus manages only instruction fetching."
+      ]
+    },
+    {
+      "question": "Which technique is used in data representation to ensure integrity during transmission or storage by appending redundant bits?",
+      "options": [
+        "Fixed-point normalization",
+        "Floating-point rounding",
+        "Error detection and correction codes",
+        "Decimal arithmetic operations"
+      ]
+    },
+    {
+      "question": "Which hardware unit is specifically designed to combine arithmetic, logic, and shift micro-operations?",
+      "options": [
+        "Control Memory Sequencer",
+        "Instruction Register Stack",
+        "Arithmetic logic shift unit",
+        "Memory Address Register"
+      ]
+    },
+    {
+      "question": "Which characteristic primarily distinguishes a Complex Instruction Set Computer (CISC) architecture?",
+      "options": [
+        "It relies exclusively on hardwired control logic.",
+        "Instructions are generally fixed in length and execute in one clock cycle.",
+        "It utilizes a load/store architecture for all memory operations.",
+        "Instructions often execute complex tasks with a single instruction."
+      ]
+    },
+    {
+      "question": "In a system utilizing virtual memory, what mechanism translates virtual addresses into physical addresses, typically involving a dedicated table structure?",
+      "options": [
+        "Cache line mapping",
+        "RAID configuration",
+        "Memory banking",
+        "Paging"
+      ]
+    },
+    {
+      "question": "What concept ensures that all copies of a shared data block residing in different local caches across a multiprocessor system remain consistent?",
+      "options": [
+        "Inter Processor Arbitration",
+        "Bus Structure Synchronization",
+        "Cache Coherence",
+        "Register Transfer Language"
+      ]
+    },
+    {
+      "question": "Which I/O communication technique allows peripherals to transfer data directly to or from main memory without continuous CPU intervention?",
+      "options": [
+        "Programmed I/O",
+        "Interrupt Driven I/O",
+        "Memory Mapped I/O",
+        "Direct Memory Access (DMA)"
+      ]
+    }
+  ]
+}

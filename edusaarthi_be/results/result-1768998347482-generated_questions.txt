@@ -1,0 +1,11 @@
+Generated Questions
+===================
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 21/1/2026, 5:55:47 pm
+
+1. Analyze the systemic trade-offs between flexibility and speed inherent in the two primary implementations of the control unit: micro-programmed control versus hardwired logic. Under what computational circumstances would one approach be decisively preferred over the other?
+2. Explain how the principles of temporal and spatial locality fundamentally justify the layered structure of the memory hierarchy, and critically evaluate the performance implications of increasing the associativity versus increasing the block size within a cache memory system.
+3. In a shared-memory multiprocessor system utilizing private caches, describe the necessity of cache coherence protocols and evaluate the complexities introduced by maintaining consistency across multiple processing elements during write operations.
+4. Compare and contrast the architectural philosophies of Complex Instruction Set Computing (CISC) and Reduced Instruction Set Computing (RISC), focusing specifically on how instruction format variability and addressing mode complexity impact pipeline efficiency and instruction decoding hardware.
+5. Critically analyze the operational differences between Programmed I/O, Interrupt-Driven I/O, and Direct Memory Access (DMA). For a high-throughput storage device, explain why DMA is essential for mitigating processor overhead and avoiding potential data transfer bottlenecks.

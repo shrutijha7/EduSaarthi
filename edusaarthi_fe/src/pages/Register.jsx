@@ -8,6 +8,7 @@ const Register = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('user');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { register } = useAuth();
@@ -18,7 +19,7 @@ const Register = () => {
         setError('');
         setLoading(true);
 
-        const result = await register(name, username, email, password);
+        const result = await register(name, username, email, password, role);
         if (result.success) {
             navigate('/dashboard');
         } else {
@@ -101,6 +102,8 @@ const Register = () => {
                             />
                         </div>
                     </div>
+
+
 
                     <button type="submit" className="btn-primary" disabled={loading}>
                         {loading ? <Loader2 className="animate-spin" /> : <UserPlus size={20} />}

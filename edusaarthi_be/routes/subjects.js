@@ -71,7 +71,7 @@ router.post('/', protect, async (req, res) => {
             category: req.body.category || 'General',
             instructor: req.body.instructor || 'Self',
             files: [],
-            batches: []
+            batches: req.body.batches || []
         });
 
         console.log('Subject created successfully:', newSubject);
