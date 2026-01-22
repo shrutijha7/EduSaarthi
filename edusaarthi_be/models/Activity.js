@@ -9,7 +9,7 @@ const activitySchema = new mongoose.Schema({
     filePath: { type: String }, // Path to stored file
     type: {
         type: String,
-        enum: ['course_complete', 'lesson_complete', 'assignment_submit', 'signup', 'question_generation', 'quiz', 'automation'],
+        enum: ['course_complete', 'lesson_complete', 'assignment_submit', 'signup', 'question_generation', 'quiz', 'automation', 'fill_in_blanks', 'true_false', 'subjective'],
         default: 'lesson_complete'
     },
     content: { type: mongoose.Schema.Types.Mixed } // Store the generated assessment results (JSON)

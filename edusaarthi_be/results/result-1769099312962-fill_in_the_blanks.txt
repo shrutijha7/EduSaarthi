@@ -1,0 +1,21 @@
+Fill in the Blanks
+==================
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 22/1/2026, 9:58:32 pm
+
+Q1: The principles discussed in the course emphasize performance and cost analysis, instruction set design, pipelining, memory hierarchy, and __________ management.
+Answer: virtual memory
+
+Q2: A key objective of the course is to familiarize students with the basic components and design of the CPU, including the control unit and the __________.
+Answer: ALU
+
+Q3: The fundamental structure of computers covers functional units, basic operational concepts, and the principles of the __________ Architecture.
+Answer: Von-Neumann
+
+Q4: Computer architectures are often classified based on their instruction sets, such as Reduced Instruction Set Computer (RISC) and __________.
+Answer: CISC
+
+Q5: In the study of multiprocessors, critical topics include Inter Processor Arbitration, Inter processor Communication and Synchronization, and __________.
+Answer: Cache Coherence
+

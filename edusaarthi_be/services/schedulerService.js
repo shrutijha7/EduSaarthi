@@ -44,6 +44,30 @@ const executeTask = async (task) => {
                 type: 'quiz',
                 data: quizData
             };
+        } else if (task.taskType === 'fill_in_blanks') {
+            activityTitle = 'Scheduled: Fill in the Blanks';
+            activityDescription = `AI-generated fill-in-the-blanks from ${task.originalFileName}`;
+            const fillData = await aiService.generateFillInBlanks(extractedText, task.questionCount);
+            generatedContent = {
+                type: 'fill_in_blanks',
+                data: fillData
+            };
+        } else if (task.taskType === 'true_false') {
+            activityTitle = 'Scheduled: True / False';
+            activityDescription = `AI-generated true/false questions from ${task.originalFileName}`;
+            const tfData = await aiService.generateTrueFalse(extractedText, task.questionCount);
+            generatedContent = {
+                type: 'true_false',
+                data: tfData
+            };
+        } else if (task.taskType === 'subjective') {
+            activityTitle = 'Scheduled: Subjective Questions';
+            activityDescription = `AI-generated subjective questions from ${task.originalFileName}`;
+            const subData = await aiService.generateSubjective(extractedText, task.questionCount);
+            generatedContent = {
+                type: 'subjective',
+                data: subData
+            };
         }
 
         // 2. Create Activity
@@ -83,6 +107,37 @@ const executeTask = async (task) => {
                     </div>
                 </div>
             `;
+                });
+            } else if (content.type === 'fill_in_blanks' && Array.isArray(content.data)) {
+                content.data.forEach((item, i) => {
+                    questionsHtml += `
+                        <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                            <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                            <p style="margin: 8px 0 0; color: #64748b; font-style: italic;">Answer: ${item.answer}</p>
+                        </div>
+                    `;
+                });
+            } else if (content.type === 'true_false' && Array.isArray(content.data)) {
+                content.data.forEach((item, i) => {
+                    questionsHtml += `
+                        <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                            <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                            <p style="margin: 8px 0 0; color: #64748b;"><strong>Answer:</strong> ${item.answer ? 'True' : 'False'}</p>
+                            <p style="margin: 4px 0 0; font-size: 13px; color: #94a3b8;">${item.explanation}</p>
+                        </div>
+                    `;
+                });
+            } else if (content.type === 'subjective' && Array.isArray(content.data)) {
+                content.data.forEach((item, i) => {
+                    questionsHtml += `
+                        <div style="margin-bottom: 20px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                            <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                            <div style="margin-top: 12px;">
+                                <p style="margin: 0; font-size: 14px; color: #475569;"><strong>Suggested Answer:</strong> ${item.suggestedAnswer}</p>
+                                <p style="margin: 8px 0 0; font-size: 13px; color: #64748b;"><strong>Key Points:</strong> ${item.keyPoints.join(', ')}</p>
+                            </div>
+                        </div>
+                    `;
                 });
             }
 

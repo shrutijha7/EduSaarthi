@@ -1,0 +1,25 @@
+{
+  "type": "fill_in_blanks",
+  "data": [
+    {
+      "question": "The principles discussed in the course emphasize performance and cost analysis, instruction set design, pipelining, memory hierarchy, and __________ management.",
+      "answer": "virtual memory"
+    },
+    {
+      "question": "A key objective of the course is to familiarize students with the basic components and design of the CPU, including the control unit and the __________.",
+      "answer": "ALU"
+    },
+    {
+      "question": "The fundamental structure of computers covers functional units, basic operational concepts, and the principles of the __________ Architecture.",
+      "answer": "Von-Neumann"
+    },
+    {
+      "question": "Computer architectures are often classified based on their instruction sets, such as Reduced Instruction Set Computer (RISC) and __________.",
+      "answer": "CISC"
+    },
+    {
+      "question": "In the study of multiprocessors, critical topics include Inter Processor Arbitration, Inter processor Communication and Synchronization, and __________.",
+      "answer": "Cache Coherence"
+    }
+  ]
+}

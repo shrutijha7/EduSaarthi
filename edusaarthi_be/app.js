@@ -16,6 +16,7 @@ var activitiesRouter = require("./routes/activities");
 var recipientGroupsRouter = require("./routes/recipientGroups");
 var batchesRouter = require("./routes/batches");
 var assignmentsRouter = require("./routes/assignments");
+var questionBankRouter = require("./routes/questionBank");
 var { initScheduler } = require("./services/schedulerService");
 
 var app = express();
@@ -57,6 +58,7 @@ app.use("/api/activities", activitiesRouter);
 app.use("/api/recipient-groups", recipientGroupsRouter);
 app.use("/api/batches", batchesRouter);
 app.use("/api/assignments", assignmentsRouter);
+app.use("/api/question-bank", questionBankRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -88,6 +88,30 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
                 type: 'quiz',
                 data: quizData
             };
+        } else if (taskType === 'fill_in_blanks') {
+            activityTitle = 'Fill in the Blanks';
+            activityDescription = `AI-generated fill-in-the-blanks from ${originalName}`;
+            const fillData = await aiService.generateFillInBlanks(extractedText, parseInt(questionCount) || 5);
+            generatedContent = {
+                type: 'fill_in_blanks',
+                data: fillData
+            };
+        } else if (taskType === 'true_false') {
+            activityTitle = 'True / False';
+            activityDescription = `AI-generated true/false questions from ${originalName}`;
+            const tfData = await aiService.generateTrueFalse(extractedText, parseInt(questionCount) || 5);
+            generatedContent = {
+                type: 'true_false',
+                data: tfData
+            };
+        } else if (taskType === 'subjective') {
+            activityTitle = 'Subjective Questions';
+            activityDescription = `AI-generated subjective questions from ${originalName}`;
+            const subData = await aiService.generateSubjective(extractedText, parseInt(questionCount) || 5);
+            generatedContent = {
+                type: 'subjective',
+                data: subData
+            };
         } else {
             activityTitle = 'File Processed';
             activityDescription = `Processed ${originalName}`;
@@ -141,6 +165,23 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
                 textContent += `Q${i + 1}: ${item.question}\n`;
                 item.options.forEach((opt, j) => textContent += `   ${String.fromCharCode(65 + j)}) ${opt}\n`);
                 textContent += `\n`;
+            });
+        } else if (generatedContent.type === 'fill_in_blanks' && Array.isArray(generatedContent.data)) {
+            generatedContent.data.forEach((item, i) => {
+                textContent += `Q${i + 1}: ${item.question}\n`;
+                textContent += `Answer: ${item.answer}\n\n`;
+            });
+        } else if (generatedContent.type === 'true_false' && Array.isArray(generatedContent.data)) {
+            generatedContent.data.forEach((item, i) => {
+                textContent += `Q${i + 1}: ${item.question}\n`;
+                textContent += `Answer: ${item.answer ? 'True' : 'False'}\n`;
+                textContent += `Explanation: ${item.explanation}\n\n`;
+            });
+        } else if (generatedContent.type === 'subjective' && Array.isArray(generatedContent.data)) {
+            generatedContent.data.forEach((item, i) => {
+                textContent += `Q${i + 1}: ${item.question}\n`;
+                textContent += `Suggested Answer: ${item.suggestedAnswer}\n`;
+                textContent += `Key Points: ${item.keyPoints.join(', ')}\n\n`;
             });
         }
 
@@ -261,6 +302,37 @@ const formatEmailBody = (title, content, fileName) => {
                                 <strong>${String.fromCharCode(65 + j)}.</strong> ${opt}
                             </div>
                         `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+    } else if (content.type === 'fill_in_blanks' && Array.isArray(content.data)) {
+        content.data.forEach((item, i) => {
+            questionsHtml += `
+                <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                    <p style="margin: 8px 0 0; color: #64748b; font-style: italic;">Answer: ${item.answer}</p>
+                </div>
+            `;
+        });
+    } else if (content.type === 'true_false' && Array.isArray(content.data)) {
+        content.data.forEach((item, i) => {
+            questionsHtml += `
+                <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                    <p style="margin: 8px 0 0; color: #64748b;"><strong>Answer:</strong> ${item.answer ? 'True' : 'False'}</p>
+                    <p style="margin: 4px 0 0; font-size: 13px; color: #94a3b8;">${item.explanation}</p>
+                </div>
+            `;
+        });
+    } else if (content.type === 'subjective' && Array.isArray(content.data)) {
+        content.data.forEach((item, i) => {
+            questionsHtml += `
+                <div style="margin-bottom: 20px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <p style="margin: 0; font-weight: 600; color: #1e293b;">Q${i + 1}: ${item.question}</p>
+                    <div style="margin-top: 12px;">
+                        <p style="margin: 0; font-size: 14px; color: #475569;"><strong>Suggested Answer:</strong> ${item.suggestedAnswer}</p>
+                        <p style="margin: 8px 0 0; font-size: 13px; color: #64748b;"><strong>Key Points:</strong> ${item.keyPoints.join(', ')}</p>
                     </div>
                 </div>
             `;

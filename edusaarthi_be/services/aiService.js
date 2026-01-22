@@ -101,8 +101,107 @@ const generateQuiz = async (text, count = 5) => {
     }
 };
 
+/**
+ * Generates fill-in-the-blanks questions based on the provided text
+ * @param {string} text 
+ * @param {number} count
+ * @returns {Promise<Array<{question: string, answer: string}>>}
+ */
+const generateFillInBlanks = async (text, count = 5) => {
+    const prompt = `
+    ROLE: Professional Assessment Developer.
+    
+    TASK: Generate ${count} Fill-in-the-blanks questions based on the provided text.
+    
+    CRITICAL RULES:
+    1. ZERO DOCUMENT REFERENCES: Never use words like "Unit", "Section", "PDF", "Text", etc.
+    2. FORMAT: Each question should have one blank represented by "__________".
+    3. JSON FORMAT: Return ONLY a JSON array of objects: [{ "question": "...", "answer": "..." }]
+    
+    Document Text:
+    ${text.substring(0, 15000)}
+    `;
+
+    try {
+        const result = await model.invoke(prompt);
+        let content = result.content.replace(/```json/g, "").replace(/```/g, "").trim();
+        const data = JSON.parse(content);
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error("AI Fill-in-the-blanks Error:", error);
+        return [];
+    }
+};
+
+/**
+ * Generates True/False questions based on the provided text
+ * @param {string} text 
+ * @param {number} count
+ * @returns {Promise<Array<{question: string, answer: boolean, explanation: string}>>}
+ */
+const generateTrueFalse = async (text, count = 5) => {
+    const prompt = `
+    ROLE: Professional Assessment Developer.
+    
+    TASK: Generate ${count} True/False questions based on the provided text.
+    
+    CRITICAL RULES:
+    1. ZERO DOCUMENT REFERENCES.
+    2. Provide an explanation for why the statement is true or false.
+    3. JSON FORMAT: Return ONLY a JSON array of objects: [{ "question": "...", "answer": true/false, "explanation": "..." }]
+    
+    Document Text:
+    ${text.substring(0, 15000)}
+    `;
+
+    try {
+        const result = await model.invoke(prompt);
+        let content = result.content.replace(/```json/g, "").replace(/```/g, "").trim();
+        const data = JSON.parse(content);
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error("AI True/False Error:", error);
+        return [];
+    }
+};
+
+/**
+ * Generates subjective (short/long answer) questions with grading suggestions
+ * @param {string} text 
+ * @param {number} count
+ * @returns {Promise<Array<{question: string, suggestedAnswer: string, keyPoints: string[]}>>}
+ */
+const generateSubjective = async (text, count = 5) => {
+    const prompt = `
+    ROLE: Senior Academic Examiner.
+    
+    TASK: Generate ${count} Subjective (Short/Long Answer) questions based on the provided text.
+    
+    CRITICAL RULES:
+    1. ZERO DOCUMENT REFERENCES.
+    2. Provide a "suggestedAnswer" and a list of "keyPoints" for grading.
+    3. JSON FORMAT: Return ONLY a JSON array of objects: [{ "question": "...", "suggestedAnswer": "...", "keyPoints": ["...", "..."] }]
+    
+    Document Text:
+    ${text.substring(0, 15000)}
+    `;
+
+    try {
+        const result = await model.invoke(prompt);
+        let content = result.content.replace(/```json/g, "").replace(/```/g, "").trim();
+        const data = JSON.parse(content);
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error("AI Subjective Error:", error);
+        return [];
+    }
+};
+
 module.exports = {
     extractTextFromPDF,
     generateQuestions,
-    generateQuiz
+    generateQuiz,
+    generateFillInBlanks,
+    generateTrueFalse,
+    generateSubjective
 };

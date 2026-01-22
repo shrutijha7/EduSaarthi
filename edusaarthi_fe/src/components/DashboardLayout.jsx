@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Bell, Settings, Search, LayoutGrid, BookOpen, Clock, Zap } from 'lucide-react';
+import { LogOut, Bell, Settings, Search, LayoutGrid, BookOpen, Clock, Zap, Star } from 'lucide-react';
 import { NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../utils/api';
 
@@ -93,6 +93,13 @@ const Layout = ({ children }) => {
                     >
                         <Clock size={20} />
                         <span>History</span>
+                    </NavLink>
+                    <NavLink
+                        to="/question-bank"
+                        className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                    >
+                        <Star size={20} />
+                        <span>Question Bank</span>
                     </NavLink>
                 </nav>
 

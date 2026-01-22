@@ -1,0 +1,11 @@
+Generated Questions
+===================
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 22/1/2026, 9:57:57 pm
+
+1. Contrast the architectural philosophy of Reduced Instruction Set Computing (RISC) versus Complex Instruction Set Computing (CISC), specifically analyzing how the respective design choices regarding instruction formats and addressing modes influence pipeline efficiency and compiler optimization complexity.
+2. Discuss the necessity of the memory hierarchy in managing the speed gap between the CPU and main storage. Specifically, evaluate the performance trade-offs and complexity introduced by integrating a virtual memory paging scheme with a high-speed cache memory system.
+3. Analyze the fundamental differences between micro-programmed control and hardwired control unit designs. Explain how the choice of implementation impacts the ability to modify the instruction set architecture post-design, and quantify the associated clock cycle overhead.
+4. Evaluate the efficiency and resource consumption of different input/output techniques (Programmed I/O, Interrupt-Driven I/O, and DMA). Under what conditions does Direct Memory Access become a mandatory requirement rather than merely an optimization?
+5. In a shared-memory multiprocessor system utilizing private caches, explain the critical issue of data inconsistency known as cache coherence. Detail the conceptual requirements and potential overheads of protocols designed to enforce consistency across the interconnected processing elements.

@@ -33,6 +33,7 @@ const AssignmentWorkspace = () => {
     const [newBatch, setNewBatch] = useState({ name: '', description: '', students: [] });
     const [editingBatch, setEditingBatch] = useState(null);
     const [studentInput, setStudentInput] = useState({ name: '', email: '', rollNumber: '' });
+    const [starringId, setStarringId] = useState(null);
     const fileInputRef = useRef(null);
 
     // Detect if we're using subjects or courses based on URL
@@ -327,6 +328,30 @@ const AssignmentWorkspace = () => {
             setShowEditBatchModal(false);
         } catch (error) {
             console.error('Error deleting batch:', error);
+        }
+    };
+
+    const handleStarQuestion = async (item, type) => {
+        setStarringId(item.question || item);
+        try {
+            const payload = {
+                type: type,
+                question: item.question || item,
+                options: item.options || [],
+                answer: item.answer || null,
+                explanation: item.explanation || '',
+                suggestedAnswer: item.suggestedAnswer || '',
+                keyPoints: item.keyPoints || [],
+                subjectId: id
+            };
+
+            await api.post('/api/question-bank', payload);
+            alert('Question saved to library!');
+        } catch (error) {
+            console.error('Error starring question:', error);
+            alert('Failed to save question.');
+        } finally {
+            setStarringId(null);
         }
     };
 
@@ -635,7 +660,10 @@ const AssignmentWorkspace = () => {
                                         }}
                                     >
                                         <option value="question_generation" style={{ color: 'black' }}>Question Generation</option>
-                                        <option value="quiz" style={{ color: 'black' }}>Quiz</option>
+                                        <option value="quiz" style={{ color: 'black' }}>Quiz (MCQ)</option>
+                                        <option value="fill_in_blanks" style={{ color: 'black' }}>Fill in the Blanks</option>
+                                        <option value="true_false" style={{ color: 'black' }}>True / False</option>
+                                        <option value="subjective" style={{ color: 'black' }}>Subjective (Short/Long Answer)</option>
                                     </select>
                                 </div>
                                 {(taskType === 'question_generation' || taskType === 'quiz') && (
@@ -722,27 +750,198 @@ const AssignmentWorkspace = () => {
                                             {generatedContent.data.map((q, idx) => (
                                                 <li key={idx} style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                                                     <span style={{ paddingTop: '0.7rem', color: 'var(--primary)', fontWeight: 'bold' }}>{idx + 1}.</span>
-                                                    <textarea
-                                                        value={q}
-                                                        onChange={(e) => {
-                                                            const newQuestions = [...generatedContent.data];
-                                                            newQuestions[idx] = e.target.value;
-                                                            setGeneratedContent({ ...generatedContent, data: newQuestions });
-                                                        }}
-                                                        style={{
-                                                            width: '100%',
-                                                            padding: '0.75rem',
-                                                            borderRadius: '8px',
-                                                            border: '1px solid var(--glass-border)',
-                                                            background: 'rgba(0,0,0,0.2)',
-                                                            color: 'white',
-                                                            resize: 'vertical',
-                                                            minHeight: '60px'
-                                                        }}
-                                                    />
+                                                    <div style={{ flex: 1, display: 'flex', gap: '1rem' }}>
+                                                        <textarea
+                                                            value={q}
+                                                            onChange={(e) => {
+                                                                const newQuestions = [...generatedContent.data];
+                                                                newQuestions[idx] = e.target.value;
+                                                                setGeneratedContent({ ...generatedContent, data: newQuestions });
+                                                            }}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '0.75rem',
+                                                                borderRadius: '8px',
+                                                                border: '1px solid var(--glass-border)',
+                                                                background: 'rgba(0,0,0,0.2)',
+                                                                color: 'white',
+                                                                resize: 'vertical',
+                                                                minHeight: '60px'
+                                                            }}
+                                                        />
+                                                        <button
+                                                            onClick={() => handleStarQuestion(q, 'question_generation')}
+                                                            title="Save to library"
+                                                            style={{
+                                                                background: 'rgba(255,255,255,0.05)',
+                                                                border: '1px solid var(--glass-border)',
+                                                                borderRadius: '8px',
+                                                                padding: '0.5rem',
+                                                                color: 'var(--primary)',
+                                                                cursor: 'pointer',
+                                                                height: 'fit-content'
+                                                            }}
+                                                        >
+                                                            <Plus size={18} />
+                                                        </button>
+                                                    </div>
                                                 </li>
                                             ))}
                                         </ul>
+                                    </div>
+                                )}
+
+                                {generatedContent.type === 'fill_in_blanks' && (
+                                    <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
+                                        <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Fill in the Blanks</h3>
+                                        <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                            {generatedContent.data.map((item, idx) => (
+                                                <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                                        <div style={{ flex: 1, marginRight: '1rem' }}>
+                                                            <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem' }}>Question {idx + 1}:</div>
+                                                            <input
+                                                                type="text"
+                                                                value={item.question}
+                                                                onChange={(e) => {
+                                                                    const newData = [...generatedContent.data];
+                                                                    newData[idx].question = e.target.value;
+                                                                    setGeneratedContent({ ...generatedContent, data: newData });
+                                                                }}
+                                                                style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'white', borderRadius: '6px' }}
+                                                            />
+                                                        </div>
+                                                        <button onClick={() => handleStarQuestion(item, 'fill_in_blanks')} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}><Plus size={20} /></button>
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Correct Answer:</div>
+                                                        <input
+                                                            type="text"
+                                                            value={item.answer}
+                                                            onChange={(e) => {
+                                                                const newData = [...generatedContent.data];
+                                                                newData[idx].answer = e.target.value;
+                                                                setGeneratedContent({ ...generatedContent, data: newData });
+                                                            }}
+                                                            style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: '#34d399', borderRadius: '6px' }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {generatedContent.type === 'true_false' && (
+                                    <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
+                                        <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>True / False Questions</h3>
+                                        <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                            {generatedContent.data.map((item, idx) => (
+                                                <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                                        <div style={{ flex: 1, marginRight: '1rem' }}>
+                                                            <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem' }}>Statement {idx + 1}:</div>
+                                                            <input
+                                                                type="text"
+                                                                value={item.question}
+                                                                onChange={(e) => {
+                                                                    const newData = [...generatedContent.data];
+                                                                    newData[idx].question = e.target.value;
+                                                                    setGeneratedContent({ ...generatedContent, data: newData });
+                                                                }}
+                                                                style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'white', borderRadius: '6px' }}
+                                                            />
+                                                        </div>
+                                                        <button onClick={() => handleStarQuestion(item, 'true_false')} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}><Plus size={20} /></button>
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                                            <input type="radio" checked={item.answer === true} onChange={() => {
+                                                                const newData = [...generatedContent.data];
+                                                                newData[idx].answer = true;
+                                                                setGeneratedContent({ ...generatedContent, data: newData });
+                                                            }} /> True
+                                                        </label>
+                                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                                            <input type="radio" checked={item.answer === false} onChange={() => {
+                                                                const newData = [...generatedContent.data];
+                                                                newData[idx].answer = false;
+                                                                setGeneratedContent({ ...generatedContent, data: newData });
+                                                            }} /> False
+                                                        </label>
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Explanation:</div>
+                                                        <textarea
+                                                            value={item.explanation}
+                                                            onChange={(e) => {
+                                                                const newData = [...generatedContent.data];
+                                                                newData[idx].explanation = e.target.value;
+                                                                setGeneratedContent({ ...generatedContent, data: newData });
+                                                            }}
+                                                            style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-muted)', borderRadius: '6px', resize: 'vertical' }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {generatedContent.type === 'subjective' && (
+                                    <div style={{ background: 'var(--glass-bg)', padding: '2rem', borderRadius: '16px' }}>
+                                        <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Subjective Questions</h3>
+                                        <div style={{ display: 'grid', gap: '2rem' }}>
+                                            {generatedContent.data.map((item, idx) => (
+                                                <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                                        <div style={{ flex: 1, marginRight: '1rem' }}>
+                                                            <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem' }}>Question {idx + 1}:</div>
+                                                            <textarea
+                                                                value={item.question}
+                                                                onChange={(e) => {
+                                                                    const newData = [...generatedContent.data];
+                                                                    newData[idx].question = e.target.value;
+                                                                    setGeneratedContent({ ...generatedContent, data: newData });
+                                                                }}
+                                                                style={{ width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'white', borderRadius: '8px', minHeight: '60px' }}
+                                                            />
+                                                        </div>
+                                                        <button onClick={() => handleStarQuestion(item, 'subjective')} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}><Plus size={20} /></button>
+                                                    </div>
+                                                    <div style={{ marginBottom: '1.5rem' }}>
+                                                        <div style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>Suggested Answer:</div>
+                                                        <textarea
+                                                            value={item.suggestedAnswer}
+                                                            onChange={(e) => {
+                                                                const newData = [...generatedContent.data];
+                                                                newData[idx].suggestedAnswer = e.target.value;
+                                                                setGeneratedContent({ ...generatedContent, data: newData });
+                                                            }}
+                                                            style={{ width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', borderRadius: '8px', minHeight: '100px' }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>Key Marking Points:</div>
+                                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                                            {item.keyPoints.map((point, pIdx) => (
+                                                                <input
+                                                                    key={pIdx}
+                                                                    type="text"
+                                                                    value={point}
+                                                                    onChange={(e) => {
+                                                                        const newData = [...generatedContent.data];
+                                                                        newData[idx].keyPoints[pIdx] = e.target.value;
+                                                                        setGeneratedContent({ ...generatedContent, data: newData });
+                                                                    }}
+                                                                    style={{ width: '100%', padding: '0.5rem', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--glass-border)', color: 'var(--text-muted)', borderRadius: '6px' }}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 

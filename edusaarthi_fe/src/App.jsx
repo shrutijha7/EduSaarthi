@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ViewAssessment from './pages/ViewAssessment';
+import QuestionBank from './pages/QuestionBank';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -110,6 +111,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <ViewAssessment />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/question-bank"
+            element={
+              <ProtectedRoute>
+                <QuestionBank />
               </ProtectedRoute>
             }
           />

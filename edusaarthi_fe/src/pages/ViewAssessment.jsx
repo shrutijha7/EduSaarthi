@@ -127,7 +127,13 @@ const ViewAssessment = () => {
                         </div>
                         <div>
                             <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Type</span>
-                            <span style={{ fontWeight: '600', color: 'white' }}>{content.type === 'quiz' ? 'Multiple Choice Quiz' : 'Study Questions'}</span>
+                            <span style={{ fontWeight: '600', color: 'white' }}>
+                                {content.type === 'quiz' ? 'Multiple Choice Quiz' :
+                                    content.type === 'fill_in_blanks' ? 'Fill in the Blanks' :
+                                        content.type === 'true_false' ? 'True / False Assessment' :
+                                            content.type === 'subjective' ? 'Subjective Assessment' :
+                                                'Study Questions'}
+                            </span>
                         </div>
                         <div>
                             <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Question Count</span>
@@ -181,6 +187,63 @@ const ViewAssessment = () => {
                                         </div>
                                     </div>
                                 )) : <p>No quiz data found in this assessment.</p>}
+                            </div>
+                        ) : content.type === 'fill_in_blanks' ? (
+                            <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                {content.data && Array.isArray(content.data) ? content.data.map((item, idx) => (
+                                    <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div style={{ fontSize: '1.1rem', color: 'white', marginBottom: '1rem' }}>
+                                            <span style={{ fontWeight: '700', marginRight: '0.75rem', color: 'var(--primary)' }}>Q{idx + 1}.</span>
+                                            {item.question}
+                                        </div>
+                                        <div style={{ padding: '0.75rem 1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', fontSize: '0.9rem', color: '#34d399' }}>
+                                            <strong>Answer:</strong> {item.answer}
+                                        </div>
+                                    </div>
+                                )) : <p>No data found.</p>}
+                            </div>
+                        ) : content.type === 'true_false' ? (
+                            <div style={{ display: 'grid', gap: '1.5rem' }}>
+                                {content.data && Array.isArray(content.data) ? content.data.map((item, idx) => (
+                                    <div key={idx} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div style={{ fontSize: '1.1rem', color: 'white', marginBottom: '1rem' }}>
+                                            <span style={{ fontWeight: '700', marginRight: '0.75rem', color: 'var(--primary)' }}>{idx + 1}.</span>
+                                            {item.question}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '2rem', marginBottom: '1rem' }}>
+                                            <span style={{ color: item.answer === true ? '#34d399' : 'var(--text-muted)', fontWeight: item.answer === true ? 'bold' : 'normal' }}>[ ] True</span>
+                                            <span style={{ color: item.answer === false ? '#34d399' : 'var(--text-muted)', fontWeight: item.answer === false ? 'bold' : 'normal' }}>[ ] False</span>
+                                        </div>
+                                        {item.explanation && (
+                                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                                                <strong>Explanation:</strong> {item.explanation}
+                                            </div>
+                                        )}
+                                    </div>
+                                )) : <p>No data found.</p>}
+                            </div>
+                        ) : content.type === 'subjective' ? (
+                            <div style={{ display: 'grid', gap: '2rem' }}>
+                                {content.data && Array.isArray(content.data) ? content.data.map((item, idx) => (
+                                    <div key={idx} style={{ padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div style={{ fontSize: '1.2rem', color: 'white', marginBottom: '1.5rem', fontWeight: '600' }}>
+                                            <span style={{ color: 'var(--primary)', marginRight: '0.75rem' }}>Q{idx + 1}.</span>
+                                            {item.question}
+                                        </div>
+                                        <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                                            <div style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '0.5rem', fontWeight: 'bold' }}>Suggested Answer:</div>
+                                            <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-main)' }}>{item.suggestedAnswer}</p>
+                                        </div>
+                                        {item.keyPoints && item.keyPoints.length > 0 && (
+                                            <div>
+                                                <div style={{ fontSize: '0.9rem', color: 'var(--primary)', marginBottom: '0.5rem', fontWeight: 'bold' }}>Key Evaluation Points:</div>
+                                                <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-muted)' }}>
+                                                    {item.keyPoints.map((kp, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{kp}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                )) : <p>No data found.</p>}
                             </div>
                         ) : (
                             <div style={{ padding: '2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
