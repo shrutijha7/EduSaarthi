@@ -1,0 +1,30 @@
+{
+  "type": "true_false",
+  "data": [
+    {
+      "question": "The course 'Computer Architecture and Organization' is restricted only to students in the Computer Science and Engineering department.",
+      "answer": false,
+      "explanation": "The document states that the course is 'Common to CSE&IT,' meaning it is taken by students from both Computer Science and Engineering (CSE) and Information Technology (IT)."
+    },
+    {
+      "question": "The syllabus covers the comparison between Complex Instruction Set Computer (CISC) and Reduced Instruction Set Computer (RISC) architectures in Unit I.",
+      "answer": false,
+      "explanation": "The comparison between CISC and RISC is explicitly listed as a topic within Unit II, under the Central processing unit section."
+    },
+    {
+      "question": "Learning basic technical writing skills is one of the secondary goals integrated into the Computer Architecture and Organization course.",
+      "answer": true,
+      "explanation": "The introductory paragraph states that 'Basic technical writing skills are also taught in this class.'"
+    },
+    {
+      "question": "The study of cache coherence and inter-processor arbitration is included in the syllabus under the unit dedicated to INPUT OUTPUT systems.",
+      "answer": false,
+      "explanation": "Cache coherence and Inter Processor Arbitration are listed under the 'MULTIPROCESSORS' section of Unit V, not exclusively under the 'INPUT OUTPUT' section."
+    },
+    {
+      "question": "A specific Course Outcome is the ability for students to critique the performance issues associated with both cache memory and virtual memory.",
+      "answer": true,
+      "explanation": "Course Outcome 5 explicitly states that students will be able to 'Critique the performance issues of cache memory and virtual memory.'"
+    }
+  ]
+}

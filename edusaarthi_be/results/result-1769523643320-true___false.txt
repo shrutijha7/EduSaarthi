@@ -1,0 +1,26 @@
+True / False
+============
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 27/1/2026, 7:50:43 pm
+
+Q1: The course 'Computer Architecture and Organization' is restricted only to students in the Computer Science and Engineering department.
+Answer: False
+Explanation: The document states that the course is 'Common to CSE&IT,' meaning it is taken by students from both Computer Science and Engineering (CSE) and Information Technology (IT).
+
+Q2: The syllabus covers the comparison between Complex Instruction Set Computer (CISC) and Reduced Instruction Set Computer (RISC) architectures in Unit I.
+Answer: False
+Explanation: The comparison between CISC and RISC is explicitly listed as a topic within Unit II, under the Central processing unit section.
+
+Q3: Learning basic technical writing skills is one of the secondary goals integrated into the Computer Architecture and Organization course.
+Answer: True
+Explanation: The introductory paragraph states that 'Basic technical writing skills are also taught in this class.'
+
+Q4: The study of cache coherence and inter-processor arbitration is included in the syllabus under the unit dedicated to INPUT OUTPUT systems.
+Answer: False
+Explanation: Cache coherence and Inter Processor Arbitration are listed under the 'MULTIPROCESSORS' section of Unit V, not exclusively under the 'INPUT OUTPUT' section.
+
+Q5: A specific Course Outcome is the ability for students to critique the performance issues associated with both cache memory and virtual memory.
+Answer: True
+Explanation: Course Outcome 5 explicitly states that students will be able to 'Critique the performance issues of cache memory and virtual memory.'
+

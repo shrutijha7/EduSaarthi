@@ -1,0 +1,30 @@
+{
+  "type": "true_false",
+  "data": [
+    {
+      "question": "The study of Instruction Formats, Stack organization, and various Addressing Modes are all categorized under the Central processing unit topics within Unit II.",
+      "answer": true,
+      "explanation": "Unit II explicitly groups Stack organization, Instruction Formats, and Addressing Modes as components of the Central processing unit discussion."
+    },
+    {
+      "question": "The comparison between Complex Instruction Set Computer (CISC) and Reduced Instruction Set Computer (RISC) architectures is a primary focus area of Unit III, not Unit II.",
+      "answer": false,
+      "explanation": "Unit II explicitly lists both CISC and RISC, along with the comparison 'CISC vs RISC,' as part of its content related to basic computer organization and design."
+    },
+    {
+      "question": "Unit II covers the Instruction codes, Computer Registers, and the Instruction cycle, but excludes the mechanism of Input-Output and interrupt handling.",
+      "answer": false,
+      "explanation": "Unit II explicitly includes 'Input-Output and interrupt' as a topic, listed alongside Timing and Control and Memory-Reference Instructions."
+    },
+    {
+      "question": "The detailed discussion of Arithmetic Micro-Operations, Logic Micro-Operations, and Shift Micro-Operations is included as part of the BASIC COMPUTER ORGANIZATION AND DESIGN content in Unit II.",
+      "answer": false,
+      "explanation": "These specific types of micro-operations (Arithmetic, Logic, Shift) are listed as core components of Unit III, under 'REGISTER TRANSFER AND MICRO-OPERATIONS,' not Unit II."
+    },
+    {
+      "question": "Data Transfer and Manipulation is a specific topic covered in Unit II, preceding the comparison between CISC and RISC architectures.",
+      "answer": true,
+      "explanation": "Unit II lists 'Data Transfer and Manipulation' immediately before the introduction of Complex Instruction Set Computer (CISC) and Reduced Instruction Set Computer (RISC)."
+    }
+  ]
+}

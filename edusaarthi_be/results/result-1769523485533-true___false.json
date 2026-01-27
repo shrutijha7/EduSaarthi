@@ -1,0 +1,30 @@
+{
+  "type": "true_false",
+  "data": [
+    {
+      "question": "The course 'COMPUTER ARCHITECTURE AND ORGANIZATION' is restricted solely to students in the CSE department.",
+      "answer": false,
+      "explanation": "The course header specifies that the subject is '(Common to CSE&IT)', meaning it is shared between Computer Science and Engineering and Information Technology students."
+    },
+    {
+      "question": "The syllabus includes instruction on basic technical writing skills as part of the course content.",
+      "answer": true,
+      "explanation": "The introductory description of the course explicitly states, 'Basic technical writing skills are also taught in this class.'"
+    },
+    {
+      "question": "The topic of Decimal arithmetic operations is covered in Unit I, which also addresses fixed and floating-point data representation.",
+      "answer": true,
+      "explanation": "Unit I, titled 'STRUCTURE OF COMPUTERS' and 'COMPUTER ARITHMETIC,' lists both 'Data representation, Fixed and Floating point' and 'Decimal arithmetic operations' as components."
+    },
+    {
+      "question": "Inter Processor Arbitration and Cache Coherence are topics discussed under the section dedicated to basic CPU organization (Unit II).",
+      "answer": false,
+      "explanation": "Inter Processor Arbitration and Cache Coherence are listed under the 'MULTIPROCESSORS' section within Unit V, not the Central Processing Unit topics of Unit II."
+    },
+    {
+      "question": "One of the stated course outcomes is the ability to critique the performance issues related to cache memory and virtual memory.",
+      "answer": true,
+      "explanation": "Course Outcome 5 states that students will be able to 'Critique the performance issues of cache memory and virtual memory.'"
+    }
+  ]
+}

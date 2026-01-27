@@ -1,0 +1,10 @@
+{
+  "type": "questions",
+  "data": [
+    "When designing an instruction set architecture, justify the necessity of employing multiple addressing modes. Provide a concrete example where an indirect or indexed addressing mode offers superior efficiency compared to a direct addressing mode for complex data structure manipulation.",
+    "Compare and contrast the architectural philosophies of Reduced Instruction Set Computers (RISC) and Complex Instruction Set Computers (CISC) regarding instruction complexity, control unit design (hardwired versus micro-programmed), and the resulting efficiency in managing instruction pipelines.",
+    "Detail the sequence of micro-operations that occur within the CPU during the execution phase of a typical instruction cycle, specifically for a memory-reference instruction, and explain the critical role the Timing and Control unit plays in synchronizing register transfers and memory access.",
+    "Explain the operational mechanism of a stack organization within the CPU. How does the use of a dedicated stack pointer register facilitate efficient handling of subroutine calls and returns, and what specific data manipulation instructions are required to manage the stack boundaries?",
+    "Describe the procedural flow when an external device generates an interrupt signal. Outline the steps the Central Processing Unit must take to acknowledge the interrupt, save the current state, and transfer control to the appropriate service routine, ensuring that the integrity of ongoing data transfer and manipulation operations is preserved."
+  ]
+}

@@ -22,6 +22,7 @@ const AssignmentWorkspace = () => {
     const [questionCount, setQuestionCount] = useState(5);
     const [generatedContent, setGeneratedContent] = useState(null);
     const [lastActivityId, setLastActivityId] = useState(null);
+    const [aiInstructions, setAiInstructions] = useState('');
     const [batches, setBatches] = useState([]);
     const [selectedBatchId, setSelectedBatchId] = useState('');
     const [showEmailModal, setShowEmailModal] = useState(false);
@@ -182,6 +183,7 @@ const AssignmentWorkspace = () => {
             formData.append('taskType', taskType);
             formData.append('questionCount', questionCount);
             formData.append('subjectId', id); // Pass subject/course ID
+            formData.append('additionalInstructions', aiInstructions);
 
             const response = await api.post('/api/activities/generate', formData);
 
@@ -700,7 +702,9 @@ const AssignmentWorkspace = () => {
                                 <Sparkles size={18} color="var(--primary)" /> AI Configuration
                             </h4>
                             <textarea
-                                placeholder="Add specific instructions or constraints for the AI (optional)..."
+                                value={aiInstructions}
+                                onChange={(e) => setAiInstructions(e.target.value)}
+                                placeholder="Example: Only generate questions from Unit 3. Focus on mechanisms and 'how' questions."
                                 style={{
                                     width: '100%',
                                     height: '120px',

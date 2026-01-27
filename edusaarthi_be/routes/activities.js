@@ -27,7 +27,7 @@ const upload = multer({ storage: storage });
 // Generate task from file
 router.post('/generate', protect, upload.single('file'), async (req, res) => {
     try {
-        const { taskType, questionCount, subjectId, existingFilePath, existingFileName } = req.body;
+        const { taskType, questionCount, subjectId, existingFilePath, existingFileName, additionalInstructions } = req.body;
 
         // Check if we have either a new upload or an existing file reference
         if (!req.file && !existingFilePath) {
@@ -75,7 +75,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
         if (taskType === 'question_generation') {
             activityTitle = 'Generated Questions';
             activityDescription = `AI-generated questions from ${originalName}`;
-            const questions = await aiService.generateQuestions(extractedText, parseInt(questionCount) || 5);
+            const questions = await aiService.generateQuestions(extractedText, parseInt(questionCount) || 5, additionalInstructions);
             generatedContent = {
                 type: 'questions',
                 data: questions
@@ -83,7 +83,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
         } else if (taskType === 'quiz') {
             activityTitle = 'Generated Quiz';
             activityDescription = `AI-generated quiz from ${originalName}`;
-            const quizData = await aiService.generateQuiz(extractedText, parseInt(questionCount) || 5);
+            const quizData = await aiService.generateQuiz(extractedText, parseInt(questionCount) || 5, additionalInstructions);
             generatedContent = {
                 type: 'quiz',
                 data: quizData
@@ -91,7 +91,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
         } else if (taskType === 'fill_in_blanks') {
             activityTitle = 'Fill in the Blanks';
             activityDescription = `AI-generated fill-in-the-blanks from ${originalName}`;
-            const fillData = await aiService.generateFillInBlanks(extractedText, parseInt(questionCount) || 5);
+            const fillData = await aiService.generateFillInBlanks(extractedText, parseInt(questionCount) || 5, additionalInstructions);
             generatedContent = {
                 type: 'fill_in_blanks',
                 data: fillData
@@ -99,7 +99,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
         } else if (taskType === 'true_false') {
             activityTitle = 'True / False';
             activityDescription = `AI-generated true/false questions from ${originalName}`;
-            const tfData = await aiService.generateTrueFalse(extractedText, parseInt(questionCount) || 5);
+            const tfData = await aiService.generateTrueFalse(extractedText, parseInt(questionCount) || 5, additionalInstructions);
             generatedContent = {
                 type: 'true_false',
                 data: tfData
@@ -107,7 +107,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
         } else if (taskType === 'subjective') {
             activityTitle = 'Subjective Questions';
             activityDescription = `AI-generated subjective questions from ${originalName}`;
-            const subData = await aiService.generateSubjective(extractedText, parseInt(questionCount) || 5);
+            const subData = await aiService.generateSubjective(extractedText, parseInt(questionCount) || 5, additionalInstructions);
             generatedContent = {
                 type: 'subjective',
                 data: subData
