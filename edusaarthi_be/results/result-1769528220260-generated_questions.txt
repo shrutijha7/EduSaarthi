@@ -1,0 +1,11 @@
+Generated Questions
+===================
+
+Source File: COMPUTER ARCHITECTURE AND ORGANIZATION.pdf
+Date: 27/1/2026, 9:07:00 pm
+
+1. Contrast the operational overhead associated with Programmed I/O versus Direct Memory Access (DMA). Under what specific conditions is the implementation of a DMA controller essential for maintaining acceptable system performance?
+2. Describe the necessity and procedural steps of address sequencing within a micro-programmed control structure. How does this sequencing mechanism facilitate the execution of complex machine instructions?
+3. Compare and contrast the design philosophies of CISC and RISC architectures, specifically analyzing how instruction format flexibility and addressing mode complexity impact the overall instruction cycle timing and control unit design.
+4. In a shared-memory multiprocessor system utilizing an interconnection structure, analyze the fundamental challenge of cache coherence. Propose two distinct conceptual mechanisms used to maintain data consistency across multiple processing elements.
+5. Explain the critical performance considerations when integrating cache memory with a virtual memory system utilizing paging. How does the principle of locality influence the design decisions regarding page size and cache block size?
