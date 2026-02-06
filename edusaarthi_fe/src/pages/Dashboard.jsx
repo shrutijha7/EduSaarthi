@@ -61,8 +61,10 @@ const Dashboard = () => {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        opacity: '0.5'
+                        opacity: '0.5',
+                        pointerEvents: 'none'
                     }}
+                    decoding="async"
                 />
                 <div style={{ position: 'relative', zIndex: 1, padding: '2.5rem', maxWidth: '600px' }}>
                     <h1 style={{ fontSize: '2.5rem', marginBottom: '0.75rem', lineHeight: '1.1' }}>Welcome back, {user?.username}!</h1>

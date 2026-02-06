@@ -58,10 +58,12 @@ const Assignments = () => {
         fetchAssignments();
     }, []);
 
-    const handleAutomate = (e, assignment) => {
+    const handleAutomate = React.useCallback((e, assignment) => {
         e.stopPropagation();
-        navigate(`/courses/${assignment._id}`);
-    };
+        window.requestAnimationFrame(() => {
+            navigate(`/courses/${assignment._id}`);
+        });
+    }, [navigate]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -321,7 +323,9 @@ const Assignments = () => {
                                 <img
                                     src={assignment.image}
                                     alt={assignment.title}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                                    decoding="async"
+                                    loading="lazy"
                                 />
                                 <div style={{ position: 'absolute', top: '1rem', left: '1rem' }}>
                                     <span className="tag" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', color: 'white', border: 'none' }}>

@@ -143,10 +143,12 @@ const Subjects = () => {
         }
     };
 
-    const handleAutomate = (e, subject) => {
+    const handleAutomate = React.useCallback((e, subject) => {
         e.stopPropagation();
-        navigate(`/subjects/${subject._id}`);
-    };
+        window.requestAnimationFrame(() => {
+            navigate(`/subjects/${subject._id}`);
+        });
+    }, [navigate]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -861,7 +863,9 @@ const Subjects = () => {
                                 <img
                                     src={subject.image}
                                     alt={subject.title}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                                    decoding="async"
+                                    loading="lazy"
                                 />
                                 <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem' }}>
                                     <span className="tag" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', color: 'white', border: 'none', fontSize: '0.7rem' }}>
