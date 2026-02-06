@@ -9,8 +9,10 @@ const Layout = ({ children }) => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [showNotifications, setShowNotifications] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activities, setActivities] = useState([]);
     const notificationRef = useRef(null);
+    const sidebarRef = useRef(null);
 
     const searchQuery = searchParams.get('q') || '';
 
@@ -64,8 +66,8 @@ const Layout = ({ children }) => {
     };
 
     return (
-        <div className="dashboard-layout">
-            <aside className="sidebar">
+        <div className={`dashboard-layout ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+            <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`} ref={sidebarRef}>
                 <div className="logo" style={{ padding: '2rem 1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <div style={{ width: '32px', height: '32px', background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Zap size={20} color="white" fill="white" />
@@ -113,6 +115,13 @@ const Layout = ({ children }) => {
 
             <div className="main-content">
                 <nav className="top-nav">
+                    <button
+                        className="mobile-toggle"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        style={{ background: 'none', border: 'none', color: 'white', display: 'none', cursor: 'pointer', padding: '0.5rem' }}
+                    >
+                        <Zap size={24} />
+                    </button>
                     <div className="search-bar">
                         <Search size={18} />
                         <input
