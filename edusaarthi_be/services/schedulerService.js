@@ -175,11 +175,9 @@ const executeTask = async (task) => {
 
         const emailHtml = formatEmailBody(activityTitle, generatedContent, task.originalFileName);
 
-        /*
         for (const email of emails) {
             await sendEmail(email, `Edusaarthi Scheduled Task: ${activityTitle}`, emailHtml);
         }
-        */
 
         // 4. Update Task Status
         task.status = 'completed';

@@ -3,7 +3,7 @@ var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
-var logger = require("morgan"); 
+var logger = require("morgan");
 var mongoose = require("mongoose");
 var cors = require("cors");
 
@@ -24,16 +24,15 @@ var app = express();
 // Connect to MongoDB
 const uri = process.env.MONGO_URI;
 if (!uri) {
-  console.error("Error: MONGO_URI is not defined in .env file");
-  process.exit(1);
+  console.error("CRITICAL: MONGO_URI is not defined. Database connection will fail.");
+} else {
+  mongoose.connect(uri)
+    .then(() => {
+      console.log("Connected to MongoDB Atlas");
+      initScheduler(); // Start the background task scheduler
+    })
+    .catch((err) => console.error("Error connecting to MongoDB:", err));
 }
-
-mongoose.connect(uri)
-  .then(() => {
-    console.log("Connected to MongoDB Atlas");
-    initScheduler(); // Start the background task scheduler
-  })
-  .catch((err) => console.error("Error connecting to MongoDB:", err));
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

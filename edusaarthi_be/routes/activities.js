@@ -128,13 +128,11 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
             content: generatedContent // Store the actual generated JSON
         });
 
-        /* 
         // 6. Send Email Notification if enabled
         if (req.user.notificationsEnabled !== false) {
             const emailHtml = formatEmailBody(activityTitle, generatedContent || { type: 'status', data: activityDescription }, originalName);
             await sendEmail(req.user.email, `Automation Complete: ${activityTitle}`, emailHtml);
         }
-        */
 
         // Create results folder if it doesn't exist
         const resultsDir = path.join(__dirname, '../results');
