@@ -9,7 +9,7 @@ const { protect } = require('../middlewares/authMiddleware');
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = 'uploads/subjects';
+        const uploadDir = process.env.VERCEL ? '/tmp/uploads/subjects' : 'uploads/subjects';
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });

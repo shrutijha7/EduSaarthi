@@ -10,9 +10,9 @@ const { sendEmail } = require('../services/emailService');
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = 'uploads/';
+        const uploadDir = process.env.VERCEL ? '/tmp/uploads/' : 'uploads/';
         if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
         cb(null, uploadDir);
     },
@@ -135,7 +135,7 @@ router.post('/generate', protect, upload.single('file'), async (req, res) => {
         }
 
         // Create results folder if it doesn't exist
-        const resultsDir = path.join(__dirname, '../results');
+        const resultsDir = process.env.VERCEL ? '/tmp/results' : path.join(__dirname, '../results');
         if (!fs.existsSync(resultsDir)) {
             fs.mkdirSync(resultsDir, { recursive: true });
         }
